@@ -10,7 +10,6 @@ pub struct Texture {
 
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
-
     pub fn load<P: AsRef<Path>>(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -21,7 +20,17 @@ impl Texture {
         let label = path_copy.to_str();
 
         let img = image::open(path)?;
-        Self::from_image(device, queue, &img, label)
+        Self::from_image(
+            device,
+            queue,
+            &img,
+            label,
+            wgpu::AddressMode::ClampToEdge,
+            wgpu::AddressMode::ClampToEdge,
+            wgpu::AddressMode::ClampToEdge,
+            wgpu::FilterMode::Linear,
+            wgpu::FilterMode::Linear,
+        )
     }
 
     pub fn create_depth_texture(
@@ -73,7 +82,17 @@ impl Texture {
         label: &str,
     ) -> Result<Self> {
         let img = image::load_from_memory(bytes)?;
-        Self::from_image(device, queue, &img, Some(label))
+        Self::from_image(
+            device,
+            queue,
+            &img,
+            Some(label),
+            wgpu::AddressMode::ClampToEdge,
+            wgpu::AddressMode::ClampToEdge,
+            wgpu::AddressMode::ClampToEdge,
+            wgpu::FilterMode::Linear,
+            wgpu::FilterMode::Linear,
+        )
     }
 
     pub fn from_image(
@@ -81,6 +100,11 @@ impl Texture {
         queue: &wgpu::Queue,
         img: &image::DynamicImage,
         label: Option<&str>,
+        addr_u: wgpu::AddressMode,
+        addr_v: wgpu::AddressMode,
+        addr_w: wgpu::AddressMode,
+        min_filter: wgpu::FilterMode,
+        mag_filter: wgpu::FilterMode,
     ) -> Result<Self> {
         let dimensions = img.dimensions();
         let rgba = img.to_rgba8();
@@ -117,11 +141,11 @@ impl Texture {
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
+            address_mode_u: addr_u,
+            address_mode_v: addr_v,
+            address_mode_w: addr_w,
+            mag_filter,
+            min_filter,
             mipmap_filter: wgpu::FilterMode::Nearest,
             ..Default::default()
         });

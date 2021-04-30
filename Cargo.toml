@@ -16,6 +16,10 @@ wgpu = "0.7"
 winit = "0.24.0"
 notify = "4.0.15"
 
+[dependencies.gltf]
+version="0.15.2"
+features=["utils","import","names"]
+
 [build-dependencies]
 anyhow = "1.0"
 fs_extra = "1.2"

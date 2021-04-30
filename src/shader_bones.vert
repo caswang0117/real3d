@@ -41,13 +41,6 @@ uniform Bones {
 // vertex transform from that.
 
 
-vec4 quat_mul_s(vec4 q1, float s)
-{
-  vec4 q2 = q1*s;
-  float m = sqrt(q2.x*q2.x+q2.y*q2.y+q2.z*q2.z+q2.w*q2.w);
-  return q2/m;
-}
-
 vec3 quat_rot(vec4 q, vec3 v) {
   return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
 }
@@ -61,18 +54,17 @@ void main() {
     );
     mat3 normal_matrix = mat3(transpose(inverse(model_matrix)));
 
-    vec3 new_vertex = a_position;
-    vec3 new_normal = a_normal;
-    for (int idx=0; idx < 4; idx++) {
+    vec3 new_vertex = vec3(0,0,0);
+    vec3 new_normal = vec3(0,0,0);
+    for (int idx=0; idx < 3; idx++) {
       int index = int(bone_ids >> (8*(3-idx)) & 0x000000FF);
       float weight = bone_weights[idx];
-      // the bone is a position offset and a rotation.
-      // so adjust the position...
-      new_vertex += bones[index].pos.xyz * weight;
-      // and rotate!
-      vec4 rot = quat_mul_s(bones[index].rot, weight);
-      new_vertex = quat_rot(rot, new_vertex);
-      new_normal = quat_rot(rot, new_normal);
+      // weighted rotate-then-translate-by-(rotated)-disp the a_vertex...
+      vec4 rot = bones[index].rot;
+      vec3 disp = bones[index].pos.xyz;
+      new_vertex += (quat_rot(rot, a_position) + disp)*weight;
+      // TODO inverse transpose instead
+      new_normal += quat_rot(rot, a_normal)*weight;
     }
     v_normal = normal_matrix * new_normal;
     v_tex_coords = a_tex_coords;

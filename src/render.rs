@@ -8,8 +8,8 @@ use cgmath::SquareMatrix;
 use std::collections::BTreeMap;
 use wgpu::util::DeviceExt;
 
-const BONE_MAX: usize = 128;
-const LIGHT_MAX: usize = 10;
+pub const BONE_MAX: usize = 128;
+pub const LIGHT_MAX: usize = 10;
 
 use winit::window::Window;
 pub(crate) struct Render {
@@ -167,8 +167,9 @@ impl Render {
                             ty: wgpu::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
                             min_binding_size: wgpu::BufferSize::new(
-                                LIGHT_MAX as u64 * std::mem::size_of::<crate::lights::Light>()
-                                    as wgpu::BufferAddress,
+                                LIGHT_MAX as u64
+                                    * std::mem::size_of::<crate::lights::Light>()
+                                        as wgpu::BufferAddress,
                             ),
                         },
                         count: None,
@@ -340,7 +341,11 @@ impl Render {
                     targets: &[wgpu::ColorTargetState {
                         format: sc_desc.format,
                         alpha_blend: wgpu::BlendState::REPLACE,
-                        color_blend: wgpu::BlendState::REPLACE,
+                        color_blend: wgpu::BlendState {
+                            operation: wgpu::BlendOperation::Add,
+                            src_factor: wgpu::BlendFactor::SrcAlpha,
+                            dst_factor: wgpu::BlendFactor::OneMinusDstAlpha
+                        },
                         write_mask: wgpu::ColorWrite::ALL,
                     }],
                 }),
@@ -410,7 +415,7 @@ impl Render {
 
     pub(crate) fn update_buffers<R, G: Game<StaticData = R>>(
         &mut self,
-        game: &G,
+        game: &mut G,
         rules: &R,
         assets: &mut Assets,
     ) {
@@ -421,7 +426,7 @@ impl Render {
             bytemuck::cast_slice(&[self.uniforms]),
         );
         self.instance_groups.clear();
-        game.render(rules, &mut self.instance_groups);
+        game.render(rules, assets, &mut self.instance_groups);
         self.instance_groups
             .update_buffers(&self.queue, &self.device, assets);
     }
@@ -438,7 +443,7 @@ impl Render {
 
     pub(crate) fn render<R, G: Game<StaticData = R>>(
         &mut self,
-        game: &G,
+        game: &mut G,
         rules: &R,
         assets: &mut Assets,
     ) -> Result<(), wgpu::SwapChainError> {
@@ -493,10 +498,10 @@ impl Render {
                 let model = assets.get_model(*mr).unwrap();
                 for (i, (_ir, bones)) in irs.iter().zip(bones.chunks_exact(BONE_MAX)).enumerate() {
                     let i = i as u64;
+                    render_pass.set_vertex_buffer(1, buf.as_ref().unwrap().slice(i..(i + InstanceRaw::desc().array_stride)));
                     self.queue
                         .write_buffer(&self.bone_buffer, 0, bytemuck::cast_slice(&bones));
-                    render_pass.set_vertex_buffer(1, buf.as_ref().unwrap().slice(i..(i + 1)));
-                    // TODO set up bones for model here and bone bind group
+                    // TODO set up bones for model here and bone bind group?
                     render_pass.draw_model_skinned(
                         model,
                         &self.uniform_bind_group,
@@ -542,12 +547,12 @@ impl InstanceGroups {
             bones.clear();
         }
     }
-    fn update_buffers(&mut self, queue: &wgpu::Queue, device: &wgpu::Device, assets: &Assets) {
-        for (mr, (irs, buf, cap)) in self.static_groups.iter_mut() {
+    fn update_buffers(&mut self, queue: &wgpu::Queue, device: &wgpu::Device, _assets: &Assets) {
+        for (_mr, (irs, buf, cap)) in self.static_groups.iter_mut() {
             if buf.is_none() || *cap < irs.len() {
                 buf.replace(
                     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some(assets.path_for_model_ref(*mr).to_str().unwrap()),
+                        label: None,
                         usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
                         contents: bytemuck::cast_slice(irs),
                     }),
@@ -557,11 +562,11 @@ impl InstanceGroups {
                 queue.write_buffer(buf.as_ref().unwrap(), 0, bytemuck::cast_slice(irs));
             }
         }
-        for (mr, (irs, buf, cap, _bones)) in self.anim_groups.iter_mut() {
+        for (_mr, (irs, buf, cap, _bones)) in self.anim_groups.iter_mut() {
             if buf.is_none() || *cap < irs.len() {
                 buf.replace(
                     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some(assets.path_for_model_ref(*mr).to_str().unwrap()),
+                        label: None,
                         usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
                         contents: bytemuck::cast_slice(irs),
                     }),

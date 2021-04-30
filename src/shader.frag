@@ -52,5 +52,8 @@ void main() {
     vec3 specular_color = specular_strength * light_color;
     result += (ambient_color + diffuse_color + specular_color) * object_color.xyz;
   }
+  if(object_color.a < 0.1) {
+    discard;
+  }
   f_color = vec4(result, object_color.a);
 }

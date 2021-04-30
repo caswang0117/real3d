@@ -24,7 +24,7 @@ pub trait Game: Sized {
     type StaticData;
     fn start(engine: &mut Engine) -> (Self, Self::StaticData);
     fn update(&mut self, rules: &Self::StaticData, engine: &mut Engine);
-    fn render(&self, rules: &Self::StaticData, igs: &mut InstanceGroups);
+    fn render(&mut self, rules: &Self::StaticData, assets:&Assets, igs: &mut InstanceGroups);
 }
 
 pub struct Engine {
@@ -41,6 +41,21 @@ impl Engine {
             &self.render.queue,
             &self.render.texture_layout,
             model,
+        )
+    }
+    pub fn load_gltf(
+        &mut self,
+        gltf: impl AsRef<Path>,
+    ) -> (
+        Vec<assets::ModelRef>,
+        Vec<assets::RigRef>,
+        Vec<assets::AnimRef>,
+    ) {
+        self.assets.load_gltf(
+            &self.render.device,
+            &self.render.queue,
+            &self.render.texture_layout,
+            gltf,
         )
     }
     pub fn camera_mut(&mut self) -> &mut camera::Camera {
@@ -108,7 +123,7 @@ pub fn run<R, G: Game<StaticData = R>>(
                 }
             }
             Event::RedrawRequested(_) => {
-                match engine.render.render(&game, &rules, &mut engine.assets) {
+                match engine.render.render(&mut game, &rules, &mut engine.assets) {
                     Ok(_) => {}
                     // Recreate the swap_chain if lost
                     Err(wgpu::SwapChainError::Lost) => engine.render.resize(engine.render.size),
