@@ -1,4 +1,4 @@
-use crate::anim::{self, DrawAnimated};
+// use crate::anim::{self, DrawAnimated};
 use crate::assets::{Assets, ModelRef};
 use crate::camera::Camera;
 use crate::model::*;
@@ -20,14 +20,14 @@ pub(crate) struct Render {
     swap_chain: wgpu::SwapChain,
     pub(crate) size: winit::dpi::PhysicalSize<u32>,
     static_render_pipeline: wgpu::RenderPipeline,
-    animated_render_pipeline: wgpu::RenderPipeline,
+    // animated_render_pipeline: wgpu::RenderPipeline,
     pub(crate) texture_layout: wgpu::BindGroupLayout,
     pub(crate) camera: Camera,
     uniforms: Uniforms,
     uniform_buffer: wgpu::Buffer,
     uniform_bind_group: wgpu::BindGroup,
-    bone_buffer: wgpu::Buffer,
-    bone_bind_group: wgpu::BindGroup,
+    // bone_buffer: wgpu::Buffer,
+    // bone_bind_group: wgpu::BindGroup,
     pub(crate) ambient: f32,
     light_ambient_buffer: wgpu::Buffer,
     lights: Vec<crate::lights::Light>,
@@ -215,42 +215,42 @@ impl Render {
             label: Some("light_bind_group"),
         });
 
-        let bone_uniform_size =
-            (BONE_MAX * std::mem::size_of::<crate::anim::Bone>()) as wgpu::BufferAddress;
-        let bone_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Bones buffer"),
-            size: bone_uniform_size,
-            usage: wgpu::BufferUsage::UNIFORM
-                | wgpu::BufferUsage::COPY_SRC
-                | wgpu::BufferUsage::COPY_DST,
-            mapped_at_creation: false,
-        });
-        let bone_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: wgpu::BufferSize::new(
-                            BONE_MAX as u64
-                                * std::mem::size_of::<anim::Bone>() as wgpu::BufferAddress,
-                        ),
-                    },
-                    count: None,
-                }],
-                label: Some("bone_bind_group_layout"),
-            });
-
-        let bone_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &bone_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: bone_buffer.as_entire_binding(),
-            }],
-            label: Some("bone_bind_group"),
-        });
+        // let bone_uniform_size =
+        //     (BONE_MAX * std::mem::size_of::<crate::anim::Bone>()) as wgpu::BufferAddress;
+        // let bone_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        //     label: Some("Bones buffer"),
+        //     size: bone_uniform_size,
+        //     usage: wgpu::BufferUsage::UNIFORM
+        //         | wgpu::BufferUsage::COPY_SRC
+        //         | wgpu::BufferUsage::COPY_DST,
+        //     mapped_at_creation: false,
+        // });
+        // let bone_bind_group_layout =
+        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        //         entries: &[wgpu::BindGroupLayoutEntry {
+        //             binding: 0,
+        //             visibility: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
+        //             ty: wgpu::BindingType::Buffer {
+        //                 ty: wgpu::BufferBindingType::Uniform,
+        //                 has_dynamic_offset: false,
+        //                 min_binding_size: wgpu::BufferSize::new(
+        //                     BONE_MAX as u64
+        //                         * std::mem::size_of::<anim::Bone>() as wgpu::BufferAddress,
+        //                 ),
+        //             },
+        //             count: None,
+        //         }],
+        //         label: Some("bone_bind_group_layout"),
+        //     });
+        //
+        // let bone_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     layout: &bone_bind_group_layout,
+        //     entries: &[wgpu::BindGroupEntry {
+        //         binding: 0,
+        //         resource: bone_buffer.as_entire_binding(),
+        //     }],
+        //     label: Some("bone_bind_group"),
+        // });
 
         let static_vs_module =
             device.create_shader_module(&wgpu::include_spirv!("shader.vert.spv"));
@@ -314,65 +314,65 @@ impl Render {
                 },
             })
         };
-        let animated_render_pipeline = {
-            let animated_render_pipeline_layout =
-                device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: Some("Animated Render Pipeline Layout"),
-                    bind_group_layouts: &[
-                        &texture_bind_group_layout,
-                        &uniform_bind_group_layout,
-                        &light_bind_group_layout,
-                        &bone_bind_group_layout,
-                    ],
-                    push_constant_ranges: &[],
-                });
-
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("Animated Render Pipeline"),
-                layout: Some(&animated_render_pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: &bones_vs_module,
-                    entry_point: "main",
-                    buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &fs_module,
-                    entry_point: "main",
-                    targets: &[wgpu::ColorTargetState {
-                        format: sc_desc.format,
-                        alpha_blend: wgpu::BlendState::REPLACE,
-                        color_blend: wgpu::BlendState {
-                            operation: wgpu::BlendOperation::Add,
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
-                            dst_factor: wgpu::BlendFactor::OneMinusDstAlpha
-                        },
-                        write_mask: wgpu::ColorWrite::ALL,
-                    }],
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList,
-                    strip_index_format: None,
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: wgpu::CullMode::Back,
-                    // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                    polygon_mode: wgpu::PolygonMode::Fill,
-                },
-                depth_stencil: Some(wgpu::DepthStencilState {
-                    format: texture::Texture::DEPTH_FORMAT,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::Less,
-                    stencil: wgpu::StencilState::default(),
-                    bias: wgpu::DepthBiasState::default(),
-                    // Setting this to true requires Features::DEPTH_CLAMPING
-                    clamp_depth: false,
-                }),
-                multisample: wgpu::MultisampleState {
-                    count: 1,
-                    mask: !0,
-                    alpha_to_coverage_enabled: false,
-                },
-            })
-        };
+        // let animated_render_pipeline = {
+        //     let animated_render_pipeline_layout =
+        //         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        //             label: Some("Animated Render Pipeline Layout"),
+        //             bind_group_layouts: &[
+        //                 &texture_bind_group_layout,
+        //                 &uniform_bind_group_layout,
+        //                 &light_bind_group_layout,
+        //                 &bone_bind_group_layout,
+        //             ],
+        //             push_constant_ranges: &[],
+        //         });
+        //
+        //     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        //         label: Some("Animated Render Pipeline"),
+        //         layout: Some(&animated_render_pipeline_layout),
+        //         vertex: wgpu::VertexState {
+        //             module: &bones_vs_module,
+        //             entry_point: "main",
+        //             buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
+        //         },
+        //         fragment: Some(wgpu::FragmentState {
+        //             module: &fs_module,
+        //             entry_point: "main",
+        //             targets: &[wgpu::ColorTargetState {
+        //                 format: sc_desc.format,
+        //                 alpha_blend: wgpu::BlendState::REPLACE,
+        //                 color_blend: wgpu::BlendState {
+        //                     operation: wgpu::BlendOperation::Add,
+        //                     src_factor: wgpu::BlendFactor::SrcAlpha,
+        //                     dst_factor: wgpu::BlendFactor::OneMinusDstAlpha
+        //                 },
+        //                 write_mask: wgpu::ColorWrite::ALL,
+        //             }],
+        //         }),
+        //         primitive: wgpu::PrimitiveState {
+        //             topology: wgpu::PrimitiveTopology::TriangleList,
+        //             strip_index_format: None,
+        //             front_face: wgpu::FrontFace::Ccw,
+        //             cull_mode: wgpu::CullMode::Back,
+        //             // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+        //             polygon_mode: wgpu::PolygonMode::Fill,
+        //         },
+        //         depth_stencil: Some(wgpu::DepthStencilState {
+        //             format: texture::Texture::DEPTH_FORMAT,
+        //             depth_write_enabled: true,
+        //             depth_compare: wgpu::CompareFunction::Less,
+        //             stencil: wgpu::StencilState::default(),
+        //             bias: wgpu::DepthBiasState::default(),
+        //             // Setting this to true requires Features::DEPTH_CLAMPING
+        //             clamp_depth: false,
+        //         }),
+        //         multisample: wgpu::MultisampleState {
+        //             count: 1,
+        //             mask: !0,
+        //             alpha_to_coverage_enabled: false,
+        //         },
+        //     })
+        // };
 
         Self {
             surface,
@@ -382,7 +382,7 @@ impl Render {
             swap_chain,
             size,
             static_render_pipeline,
-            animated_render_pipeline,
+            // animated_render_pipeline,
             camera,
             uniform_buffer,
             uniform_bind_group,
@@ -392,8 +392,8 @@ impl Render {
             lights,
             light_buffer,
             light_bind_group,
-            bone_bind_group,
-            bone_buffer,
+            // bone_bind_group,
+            // bone_buffer,
             texture_layout: texture_bind_group_layout,
             depth_texture,
             instance_groups: InstanceGroups::new(),
@@ -493,23 +493,23 @@ impl Render {
                     &self.light_bind_group,
                 );
             }
-            render_pass.set_pipeline(&self.animated_render_pipeline);
-            for (mr, (irs, buf, _cap, bones)) in self.instance_groups.anim_groups.iter() {
-                let model = assets.get_model(*mr).unwrap();
-                for (i, (_ir, bones)) in irs.iter().zip(bones.chunks_exact(BONE_MAX)).enumerate() {
-                    let i = i as u64;
-                    render_pass.set_vertex_buffer(1, buf.as_ref().unwrap().slice(i..(i + InstanceRaw::desc().array_stride)));
-                    self.queue
-                        .write_buffer(&self.bone_buffer, 0, bytemuck::cast_slice(&bones));
-                    // TODO set up bones for model here and bone bind group?
-                    render_pass.draw_model_skinned(
-                        model,
-                        &self.uniform_bind_group,
-                        &self.light_bind_group,
-                        &self.bone_bind_group,
-                    );
-                }
-            }
+            // render_pass.set_pipeline(&self.animated_render_pipeline);
+            // for (mr, (irs, buf, _cap, bones)) in self.instance_groups.anim_groups.iter() {
+            //     let model = assets.get_model(*mr).unwrap();
+            //     for (i, (_ir, bones)) in irs.iter().zip(bones.chunks_exact(BONE_MAX)).enumerate() {
+            //         let i = i as u64;
+            //         render_pass.set_vertex_buffer(1, buf.as_ref().unwrap().slice(i..(i + InstanceRaw::desc().array_stride)));
+            //         self.queue
+            //             .write_buffer(&self.bone_buffer, 0, bytemuck::cast_slice(&bones));
+            //         // TODO set up bones for model here and bone bind group?
+            //         render_pass.draw_model_skinned(
+            //             model,
+            //             &self.uniform_bind_group,
+            //             &self.light_bind_group,
+            //             &self.bone_bind_group,
+            //         );
+            //     }
+            // }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -520,32 +520,32 @@ impl Render {
 
 pub struct InstanceGroups {
     static_groups: BTreeMap<ModelRef, (Vec<InstanceRaw>, Option<wgpu::Buffer>, usize)>,
-    anim_groups: BTreeMap<
-        ModelRef,
-        (
-            Vec<InstanceRaw>,
-            Option<wgpu::Buffer>,
-            usize,
-            Vec<anim::Bone>,
-        ),
-    >,
+    // anim_groups: BTreeMap<
+    //     ModelRef,
+    //     (
+    //         Vec<InstanceRaw>,
+    //         Option<wgpu::Buffer>,
+    //         usize,
+    //         Vec<anim::Bone>,
+    //     ),
+    // >,
 }
 
 impl InstanceGroups {
     fn new() -> Self {
         Self {
             static_groups: BTreeMap::new(),
-            anim_groups: BTreeMap::new(),
+            // anim_groups: BTreeMap::new(),
         }
     }
     fn clear(&mut self) {
         for (_mr, (irs, _buf, _cap)) in self.static_groups.iter_mut() {
             irs.clear();
         }
-        for (_mr, (irs, _buf, _cap, bones)) in self.anim_groups.iter_mut() {
-            irs.clear();
-            bones.clear();
-        }
+        // for (_mr, (irs, _buf, _cap, bones)) in self.anim_groups.iter_mut() {
+        //     irs.clear();
+        //     bones.clear();
+        // }
     }
     fn update_buffers(&mut self, queue: &wgpu::Queue, device: &wgpu::Device, _assets: &Assets) {
         for (_mr, (irs, buf, cap)) in self.static_groups.iter_mut() {
@@ -562,20 +562,20 @@ impl InstanceGroups {
                 queue.write_buffer(buf.as_ref().unwrap(), 0, bytemuck::cast_slice(irs));
             }
         }
-        for (_mr, (irs, buf, cap, _bones)) in self.anim_groups.iter_mut() {
-            if buf.is_none() || *cap < irs.len() {
-                buf.replace(
-                    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: None,
-                        usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
-                        contents: bytemuck::cast_slice(irs),
-                    }),
-                );
-                *cap = irs.len();
-            } else {
-                queue.write_buffer(buf.as_ref().unwrap(), 0, bytemuck::cast_slice(irs));
-            }
-        }
+        // for (_mr, (irs, buf, cap, _bones)) in self.anim_groups.iter_mut() {
+        //     if buf.is_none() || *cap < irs.len() {
+        //         buf.replace(
+        //             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //                 label: None,
+        //                 usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
+        //                 contents: bytemuck::cast_slice(irs),
+        //             }),
+        //         );
+        //         *cap = irs.len();
+        //     } else {
+        //         queue.write_buffer(buf.as_ref().unwrap(), 0, bytemuck::cast_slice(irs));
+        //     }
+        // }
     }
     pub fn render(&mut self, mr: ModelRef, ir: InstanceRaw) {
         self.render_batch(mr, std::iter::once(ir));
@@ -588,29 +588,29 @@ impl InstanceGroups {
             .0
             .extend(ir.into_iter())
     }
-    pub fn render_anim(
-        &mut self,
-        mr: ModelRef,
-        ir: InstanceRaw,
-        bones: impl IntoIterator<Item = anim::Bone>,
-    ) {
-        self.render_anim_batch(mr, std::iter::once(ir), bones);
-    }
-    pub fn render_anim_batch(
-        &mut self,
-        mr: ModelRef,
-        ir: impl IntoIterator<Item = InstanceRaw>,
-        bone: impl IntoIterator<Item = anim::Bone>,
-    ) {
-        let ref mut groups = self.anim_groups;
-        let (irs, _buf, _cap, bones) = groups.entry(mr).or_insert((vec![], None, 0, vec![]));
-        irs.extend(ir.into_iter());
-        bones.extend(
-            bone.into_iter()
-                .chain(std::iter::repeat_with(anim::Bone::default))
-                .take(BONE_MAX),
-        );
-    }
+    // pub fn render_anim(
+    //     &mut self,
+    //     mr: ModelRef,
+    //     ir: InstanceRaw,
+    //     bones: impl IntoIterator<Item = anim::Bone>,
+    // ) {
+    //     self.render_anim_batch(mr, std::iter::once(ir), bones);
+    // }
+    // pub fn render_anim_batch(
+    //     &mut self,
+    //     mr: ModelRef,
+    //     ir: impl IntoIterator<Item = InstanceRaw>,
+    //     bone: impl IntoIterator<Item = anim::Bone>,
+    // ) {
+    //     let ref mut groups = self.anim_groups;
+    //     let (irs, _buf, _cap, bones) = groups.entry(mr).or_insert((vec![], None, 0, vec![]));
+    //     irs.extend(ir.into_iter());
+    //     bones.extend(
+    //         bone.into_iter()
+    //             .chain(std::iter::repeat_with(anim::Bone::default))
+    //             .take(BONE_MAX),
+    //     );
+    // }
 }
 
 #[repr(C)]

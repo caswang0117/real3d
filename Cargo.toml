@@ -13,8 +13,10 @@ image = "0.23"
 log = "0.4"
 tobj = "2.0"
 wgpu = "0.7"
-winit = "0.24.0"
 notify = "4.0.15"
+env_logger = "0.7"
+rand = "0.8.3"
+winit = "0.24.0"
 
 [dependencies.gltf]
 version="0.15.2"
