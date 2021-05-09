@@ -102,28 +102,8 @@ impl InstanceRaw {
 
 mod geom;
 
-use geom::*;
 use cgmath::num_traits::Pow;
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub struct Marble {
-    pub body: Sphere,
-    pub velocity: Vec3,
-}
-
-impl Marble {
-    fn to_raw(&self) -> InstanceRaw {
-        InstanceRaw {
-            model: (Mat4::from_translation(self.body.c.to_vec()) * Mat4::from_scale(self.body.r))
-                .into(),
-        }
-    }
-    fn update(&mut self, g: f32) { // update gravity
-        self.velocity += Vec3::new(0.0, -g, 0.0) * DT;
-        self.body.c += self.velocity * DT;
-        self.momentum = self.mass * self.velocity;
-    }
-}
+use geom::*;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Wall {
@@ -139,18 +119,18 @@ impl Wall {
                 self.body.n,
             )) * Mat4::from_translation(Vec3::new(0.0, -0.025, 0.0))
                 * Mat4::from_nonuniform_scale(0.5, 0.05, 0.5))
-                .into(),
+            .into(),
         }
     }
     fn process_events(&mut self, event: &WindowEvent) -> bool {
         match event {
             WindowEvent::KeyboardInput {
                 input:
-                KeyboardInput {
-                    state,
-                    virtual_keycode: Some(keycode),
-                    ..
-                },
+                    KeyboardInput {
+                        state,
+                        virtual_keycode: Some(keycode),
+                        ..
+                    },
                 ..
             } => {
                 let is_pressed = *state == ElementState::Pressed;
@@ -195,18 +175,15 @@ struct State {
     swap_chain: wgpu::SwapChain,
     size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
-    marble_model: model::Model,
     wall_model: model::Model,
     camera: Camera,
     camera_controller: CameraController,
     uniforms: Uniforms,
     uniform_buffer: wgpu::Buffer,
     uniform_bind_group: wgpu::BindGroup,
-    marbles: Vec<Marble>,
     wall: Wall,
     g: f32,
     #[allow(dead_code)]
-    marbles_buffer: wgpu::Buffer,
     walls_buffer: wgpu::Buffer,
     depth_texture: texture::Texture,
     // contacts: collision::Contacts,
@@ -304,31 +281,31 @@ impl State {
             control: (0, 0),
         };
         let mut rng = rand::thread_rng();
-        let marbles = (0..NUM_MARBLES)
-            .map(move |_x| {
-                let x = rng.gen_range(-5.0..5.0);
-                let y = rng.gen_range(1.0..5.0);
-                let z = rng.gen_range(-5.0..5.0);
-                let r = rng.gen_range(0.1..1.0);
-                let density:f32 = 10.0;
-                Marble {
-                    body: Sphere {
-                        c: Pos3::new(x, y, z),
-                        r,
-                    },
-                    velocity: Vec3::zero(),
-                    mass: (4.0/3.0)  * PI * r.pow(3) * density,
-                    momentum: Vec3::zero(),
-                }
-            })
-            .collect::<Vec<_>>();
+        // let marbles = (0..NUM_MARBLES)
+        //     .map(move |_x| {
+        //         let x = rng.gen_range(-5.0..5.0);
+        //         let y = rng.gen_range(1.0..5.0);
+        //         let z = rng.gen_range(-5.0..5.0);
+        //         let r = rng.gen_range(0.1..1.0);
+        //         let density:f32 = 10.0;
+        //         Marble {
+        //             body: Sphere {
+        //                 c: Pos3::new(x, y, z),
+        //                 r,
+        //             },
+        //             velocity: Vec3::zero(),
+        //             mass: (4.0/3.0)  * PI * r.pow(3) * density,
+        //             momentum: Vec3::zero(),
+        //         }
+        //     })
+        //     .collect::<Vec<_>>();
 
-        let marbles_data = marbles.iter().map(Marble::to_raw).collect::<Vec<_>>();
-        let marbles_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Marbles Buffer"),
-            contents: bytemuck::cast_slice(&marbles_data),
-            usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
-        });
+        // let marbles_data = marbles.iter().map(Marble::to_raw).collect::<Vec<_>>();
+        // let marbles_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Marbles Buffer"),
+        //     contents: bytemuck::cast_slice(&marbles_data),
+        //     usage: wgpu::BufferUsage::VERTEX | wgpu::BufferUsage::COPY_DST,
+        // });
         let wall_data = vec![wall.to_raw()];
         let walls_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Walls Buffer"),
@@ -367,14 +344,14 @@ impl State {
             &texture_bind_group_layout,
             res_dir.join("floor.obj"),
         )
-            .unwrap();
-        let marble_model = model::Model::load(
-            &device,
-            &queue,
-            &texture_bind_group_layout, // It's shaded the same as the floor
-            res_dir.join("sphere.obj"),
-        )
-            .unwrap();
+        .unwrap();
+        // let marble_model = model::Model::load(
+        //     &device,
+        //     &queue,
+        //     &texture_bind_group_layout, // It's shaded the same as the floor
+        //     res_dir.join("sphere.obj"),
+        // )
+        //     .unwrap();
 
         let vs_module = device.create_shader_module(&wgpu::include_spirv!("shader.vert.spv"));
         let fs_module = device.create_shader_module(&wgpu::include_spirv!("shader.frag.spv"));
@@ -439,17 +416,14 @@ impl State {
             swap_chain,
             size,
             render_pipeline,
-            marble_model,
             wall_model,
             camera,
             camera_controller,
             uniform_buffer,
             uniform_bind_group,
             uniforms,
-            marbles,
             wall,
             g: 1.0,
-            marbles_buffer,
             walls_buffer,
             depth_texture,
             // contacts: collision::Contacts::new(),
@@ -476,22 +450,22 @@ impl State {
         // we ~could~ move the plane, or we could just tweak gravity.
         // this time we'll move the plane.
         self.wall.update();
-        for m in self.marbles.iter_mut() {
-            m.update(self.g);
-        }
+        // for m in self.marbles.iter_mut() {
+        //     m.update(self.g);
+        // }
         let mut rng = rand::thread_rng();
-        for m in self.marbles.iter_mut() {
-            if (m.body.c.distance(Pos3::new(0.0, 0.0, 0.0))) >= 40.0 {
-                m.body.c = Pos3::new(
-                    rng.gen_range(-5.0..5.0),
-                    rng.gen_range(1.0..5.0),
-                    rng.gen_range(-5.0..5.0),
-                );
-                m.velocity = Vec3::zero();
-            }
-            m.update(self.g);
-        }
-        let mu = 0.2;
+        // for m in self.marbles.iter_mut() {
+        //     if (m.body.c.distance(Pos3::new(0.0, 0.0, 0.0))) >= 40.0 {
+        //         m.body.c = Pos3::new(
+        //             rng.gen_range(-5.0..5.0),
+        //             rng.gen_range(1.0..5.0),
+        //             rng.gen_range(-5.0..5.0),
+        //         );
+        //         m.velocity = Vec3::zero();
+        //     }
+        //     m.update(self.g);
+        // }
+        // let mu = 0.2;
         // collision::update(&[self.wall], &mut self.marbles, &mut self.contacts);
         // for collision::Contact { a: ma, .. } in self.contacts.wm.iter() {
         //     // apply "friction" to marbles on the ground
@@ -511,9 +485,9 @@ impl State {
             bytemuck::cast_slice(&vec![self.wall.to_raw()]),
         );
         // TODO avoid reallocating every frame
-        let marbles_data = self.marbles.iter().map(Marble::to_raw).collect::<Vec<_>>();
-        self.queue
-            .write_buffer(&self.marbles_buffer, 0, bytemuck::cast_slice(&marbles_data));
+        // let marbles_data = self.marbles.iter().map(Marble::to_raw).collect::<Vec<_>>();
+        // self.queue
+        //     .write_buffer(&self.marbles_buffer, 0, bytemuck::cast_slice(&marbles_data));
         self.uniforms.update_view_proj(&self.camera);
         self.queue.write_buffer(
             &self.uniform_buffer,
@@ -555,15 +529,15 @@ impl State {
                 }),
             });
 
-            render_pass.set_vertex_buffer(1, self.marbles_buffer.slice(..));
+            // render_pass.set_vertex_buffer(1, self.marbles_buffer.slice(..));
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.draw_model_instanced(
-                &self.marble_model,
-                0..self.marbles.len() as u32,
-                &self.uniform_bind_group,
-            );
+            // render_pass.draw_model_instanced(
+            //     &self.marble_model,
+            //     0..self.marbles.len() as u32,
+            //     &self.uniform_bind_group,
+            // );
             render_pass.set_vertex_buffer(1, self.walls_buffer.slice(..));
-            render_pass.draw_model_instanced(&self.wall_model, 0..1, &self.uniform_bind_group);
+            // render_pass.draw_model_instanced(&self.wall_model, 0..1, &self.uniform_bind_group);
         }
 
         self.queue.submit(iter::once(encoder.finish()));
@@ -586,7 +560,7 @@ fn main() {
 
     // How many frames have we simulated?
     #[allow(unused_variables)]
-        let mut frame_count: usize = 0;
+    let mut frame_count: usize = 0;
     // How many unsimulated frames have we saved up?
     let mut available_time: f32 = 0.0;
     let mut since = Instant::now();

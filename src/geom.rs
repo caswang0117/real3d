@@ -1,6 +1,6 @@
+use crate::grid::GridCoord;
 pub use cgmath::prelude::*;
 use rand::Rng;
-use crate::grid::GridCoord;
 pub type Vec3 = cgmath::Vector3<f32>;
 pub type Pos3 = cgmath::Point3<f32>;
 pub type Vec4 = cgmath::Vector4<f32>;
@@ -92,12 +92,10 @@ pub const PI: f32 = std::f32::consts::PI;
 //     }
 // }
 //
-
-
 //
-// pub trait Shape {
-//     fn translate(&mut self, v: Vec3);
-// }
+pub trait Shape {
+    fn translate(&mut self, v: Vec3);
+}
 //
 // #[derive(Clone, Copy, PartialEq, Debug)]
 // pub struct Sphere {
@@ -111,44 +109,43 @@ pub const PI: f32 = std::f32::consts::PI;
 //     }
 // }
 //
-// #[derive(Clone, Copy, PartialEq, Debug)]
-// pub struct Plane {
-//     pub n: Vec3,
-//     pub d: f32,
-// }
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Plane {
+    pub n: Vec3,
+    pub d: f32,
+}
 //
-// impl Shape for Plane {
-//     fn translate(&mut self, _v: Vec3) {
-//         panic!();
-//     }
-// }
-//
-// #[derive(Clone, Copy, PartialEq, Debug)]
-// pub struct Box {
-//     pub c: Pos3,
-//     pub axes: Mat3,
-//     pub half_sizes: Vec3,
-// }
-//
-// impl Shape for Box {
-//     fn translate(&mut self, v: Vec3) {
-//         self.c += v;
-//     }
-// }
+impl Shape for Plane {
+    fn translate(&mut self, _v: Vec3) {
+        panic!();
+    }
+}
 
-// #[derive(Clone, Copy, PartialEq, Debug)]
-// pub struct AABB {
-//     pub c: Pos3,
-//     pub half_sizes: Vec3,
-// }
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Box {
+    pub c: Pos3,
+    pub axes: Mat3,
+    pub half_sizes: Vec3,
+}
 
+impl Shape for Box {
+    fn translate(&mut self, v: Vec3) {
+        self.c += v;
+    }
+}
 
-// impl Shape for AABB {
-//     fn translate(&mut self, v: Vec3) {
-//         self.c += v;
-//     }
-// }
-//
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct AABB {
+    pub c: Pos3,
+    pub half_sizes: Vec3,
+}
+
+impl Shape for AABB {
+    fn translate(&mut self, v: Vec3) {
+        self.c += v;
+    }
+}
+
 // #[derive(Clone, Copy, PartialEq, Debug)]
 // pub struct Ray {
 //     pub p: Pos3,

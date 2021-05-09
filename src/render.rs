@@ -254,8 +254,8 @@ impl Render {
 
         let static_vs_module =
             device.create_shader_module(&wgpu::include_spirv!("shader.vert.spv"));
-        let bones_vs_module =
-            device.create_shader_module(&wgpu::include_spirv!("shader_bones.vert.spv"));
+        // let bones_vs_module =
+        //     device.create_shader_module(&wgpu::include_spirv!("shader_bones.vert.spv"));
         let fs_module = device.create_shader_module(&wgpu::include_spirv!("shader.frag.spv"));
 
         let depth_texture =
