@@ -1,6 +1,5 @@
 use cgmath;
 use rand::Rng;
-use crate::grid::GridBlock::Vacant;
 
 pub type GridCoord = cgmath::Point3<i32>;
 
@@ -49,7 +48,7 @@ impl Tetris {
                     falling: true,
                 }
             }
-            2=>{
+            2 => {
                 Tetris { // upside down T
                     blocks: vec![Block { c: GridCoord::new(5, 14, 5) },
                                  Block { c: GridCoord::new(5, 15, 5) },
@@ -58,7 +57,7 @@ impl Tetris {
                     falling: true,
                 }
             }
-            3=>{
+            3 => {
                 // corner
                 Tetris {
                     blocks: vec![Block { c: GridCoord::new(4, 14, 4) },
@@ -68,7 +67,7 @@ impl Tetris {
                     falling: true,
                 }
             }
-            4=>{
+            4 => {
                 // Z
                 Tetris {
                     blocks: vec![Block { c: GridCoord::new(3, 13, 3) },
@@ -78,7 +77,7 @@ impl Tetris {
                     falling: true,
                 }
             }
-            5=>{
+            5 => {
                 Tetris { // L
                     blocks: vec![Block { c: GridCoord::new(3, 13, 3) },
                                  Block { c: GridCoord::new(4, 13, 3) },
@@ -94,7 +93,7 @@ impl Tetris {
 
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-enum GridBlock {
+pub enum GridBlock {
     Vacant,
     Occupied(usize),
 }
@@ -112,22 +111,22 @@ impl Grid {
         }
     }
 
-    fn xyz_to_index(x: i32, y: i32, z: i32) -> usize {
+    pub fn xyz_to_index(x: i32, y: i32, z: i32) -> usize {
         debug_assert!(0 <= x && x < GRID_X_MAX);
         debug_assert!(0 <= y && y < GRID_Y_MAX);
         debug_assert!(0 <= z && z < GRID_Z_MAX);
-        (z + y * GRID_Z_MAX + x * GRID_Y_MAX * GRID_Z_MAX) as usize
+        (z + x * GRID_Z_MAX + y * GRID_Z_MAX * GRID_X_MAX) as usize
     }
 
-    fn index_to_xyz(i: usize) -> (i32, i32, i32) {
+    pub fn index_to_xyz(i: usize) -> (i32, i32, i32) {
         let i = i as i32;
         debug_assert!(i < GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX);
 
         let z = i % GRID_Z_MAX;
         let tmp = i / GRID_Z_MAX;
 
-        let y = tmp % GRID_Y_MAX;
-        let x = tmp / GRID_Y_MAX;
+        let x = tmp % GRID_X_MAX;
+        let y = tmp / GRID_X_MAX;
 
         debug_assert!(0 <= x && x < GRID_X_MAX);
         debug_assert!(0 <= y && y < GRID_Y_MAX);
@@ -136,6 +135,10 @@ impl Grid {
         (x, y, z)
     }
 
+    pub fn get_plane(&self, y: i32) -> &[GridBlock] {
+        debug_assert!(0 <= y && y < GRID_Y_MAX);
+        &self.grid[(y * GRID_Z_MAX * GRID_X_MAX) as usize..((y + 1) * GRID_Z_MAX * GRID_X_MAX) as usize]
+    }
     pub fn coord_to_index(c: GridCoord) -> usize {
         Self::xyz_to_index(c.x, c.y, c.z)
     }
@@ -146,7 +149,6 @@ impl Grid {
     }
 
     pub fn add_tetris(&mut self, tetris: Tetris) {
-
         let i = self.tetris.len();
         for b in &tetris.blocks {
             debug_assert_eq!(self.grid[Self::coord_to_index(b.c)], GridBlock::Vacant);
@@ -155,8 +157,8 @@ impl Grid {
         self.tetris.push(tetris);
     }
 
-    pub fn tetris_at_xyz(&self,x:i32,y:i32,z:i32)-> Option<&Tetris>{
-        let block = self.grid[Self::xyz_to_index(x,y,z)];
+    pub fn tetris_at_xyz(&self, x: i32, y: i32, z: i32) -> Option<&Tetris> {
+        let block = self.grid[Self::xyz_to_index(x, y, z)];
         match block {
             GridBlock::Occupied(i) => { Some(&self.tetris[i]) }
             GridBlock::Vacant => { None }
@@ -164,30 +166,27 @@ impl Grid {
     }
 
     pub fn tetris_at_coord(&self, c: GridCoord) -> Option<&Tetris> {
-        let (x,y,z)=(c.x,c.y,c.z);
-        self.tetris_at_xyz(x,y,z)
+        let (x, y, z) = (c.x, c.y, c.z);
+        self.tetris_at_xyz(x, y, z)
     }
 
-    pub fn lower_tetris(&mut self, i:usize) { // drop tetris by one
-        let t=&mut self.tetris[i];
-        if
+    pub fn lower_tetris(&mut self, i: usize) { // drop tetris by one
+        let t = &mut self.tetris[i];
         // debug_assert!(Self::tetris_at_xyz(&self,block.c.x, block.c.y-1, block.c.z)==None);
-
     }
 
-    pub fn probe_lowest(&self, x:i32, y:i32, z:i32,i:usize){
+    pub fn probe_lowest(&self, x: i32, y: i32, z: i32, i: usize) {}
 
-    }
-
-    pub fn drop_tetris(&mut self, i:usize) { // drop to lowest possible position
-        let t=&mut self.tetris[i];
+    pub fn drop_tetris(&mut self, i: usize) { // drop to lowest possible position
+        let t = &mut self.tetris[i];
         for block in t.blocks.iter_mut() {
             // check if block below is empty or not self
             // debug_assert!(Self::tetris_at_xyz(&self,block.c.x, block.c.y-1, block.c.z)==None);
             self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
             block.c.y -= 1;
+            // block.falling = false;
         }
-        block.falling = false;
+
     }
 }
 
