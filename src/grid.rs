@@ -58,12 +58,15 @@ impl Tetris {
                         },
                         Block {
                             c: GridCoord::new(4, 15, 4),
+                            color: Red,
                         },
                         Block {
                             c: GridCoord::new(5, 15, 4),
+                            color: Red,
                         },
                         Block {
                             c: GridCoord::new(4, 15, 5),
+                            color: Red,
                         },
                         Block {
                             c: GridCoord::new(5, 14, 5),
@@ -71,12 +74,15 @@ impl Tetris {
                         },
                         Block {
                             c: GridCoord::new(4, 14, 4),
+                            color: Red,
                         },
                         Block {
                             c: GridCoord::new(5, 14, 4),
+                            color: Red,
                         },
                         Block {
                             c: GridCoord::new(4, 14, 5),
+                            color: Red,
                         },
                     ],
                     bounds: TetrisBounds::new(4, 14, 5),
