@@ -1,6 +1,6 @@
+use crate::geom::*;
 use cgmath::Point3;
 use rand::Rng;
-use crate::geom::*;
 
 pub type GridCoord = cgmath::Point3<i32>;
 pub type TetrisBounds = cgmath::Point3<i32>; // top view, y is lowest point
@@ -32,7 +32,7 @@ impl Tetris {
     fn gen_random_tetris() -> Self {
         let mut rng = rand::thread_rng();
         let shape: usize = rng.gen_range(0..6);
-        println!("Shape {}",shape);
+        println!("Shape {}", shape);
         match shape {
             0 => {
                 // 2x2x2 cube
@@ -42,28 +42,28 @@ impl Tetris {
                             c: GridCoord::new(5, 15, 5),
                         },
                         Block {
-                            c: GridCoord::new(6, 15, 6),
+                            c: GridCoord::new(4, 15, 4),
                         },
                         Block {
-                            c: GridCoord::new(4, 15, 6),
+                            c: GridCoord::new(5, 15, 4),
                         },
                         Block {
-                            c: GridCoord::new(6, 15, 5),
+                            c: GridCoord::new(4, 15, 5),
                         },
                         Block {
                             c: GridCoord::new(5, 14, 5),
                         },
                         Block {
-                            c: GridCoord::new(6, 14, 6),
+                            c: GridCoord::new(4, 14, 4),
                         },
                         Block {
-                            c: GridCoord::new(4, 14, 6),
+                            c: GridCoord::new(5, 14, 4),
                         },
                         Block {
-                            c: GridCoord::new(6, 14, 5),
+                            c: GridCoord::new(4, 14, 5),
                         },
                     ],
-                    bounds: TetrisBounds::new(4, 14, 6),
+                    bounds: TetrisBounds::new(4, 14, 5),
                     falling: true,
                 }
             }
@@ -206,9 +206,7 @@ pub struct Grid {
 impl Grid {
     pub fn new(origin: cgmath::Vector3<i32>) -> Self {
         Self {
-            tetris: vec![
-                Tetris::gen_random_tetris()
-            ],
+            tetris: vec![Tetris::gen_random_tetris()],
             current: 0,
             origin,
             grid: [GridBlock::Vacant; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
@@ -256,10 +254,15 @@ impl Grid {
     }
 
     // spawn new tetris piece
-    pub fn add_tetris(&mut self, tetris: Tetris) {
+    pub fn add_tetris(&mut self) {
+        let tetris = Tetris::gen_random_tetris();
+        println!("add_tetris function");
         let i = self.tetris.len();
+        self.current = i;
         for b in &tetris.blocks {
-            debug_assert_eq!(self.grid[Self::coord_to_index(b.c)], GridBlock::Vacant);
+            // debug_assert_eq!(self.grid[Self::coord_to_index(b.c)], GridBlock::Vacant);
+            // println!("coord: {:?}", b.c);
+            // println!("gridblock: {:?}", self.grid[Self::coord_to_index(b.c)]);
             self.grid[Self::coord_to_index(b.c)] = GridBlock::Occupied(i)
         }
         self.tetris.push(tetris);
@@ -281,15 +284,23 @@ impl Grid {
     // drop tetris by one grid spot
     pub fn lower_tetris(&mut self, i: usize) {
         let t = &mut self.tetris[i];
+        println!("lower_tetris function");
 
         // check if all spaces below are vacant or self and not floor
         for block in t.blocks.iter_mut() {
             let check = GridCoord::new(block.c.x, block.c.y - 1, block.c.z);
-
-            if !(self.grid[Self::coord_to_index(check)]).is_vacant()
-                || !(self.grid[Self::coord_to_index(check)] == GridBlock::Occupied(i))
-                || check.y == 0
+            // println!("check: {:?}", check);
+            // println!(
+            //     "if {:?}",
+            //     check.y == -1
+            //         || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+            //             && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+            // );
+            if check.y == -1
+                || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                    && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
             {
+                // println!("enter if");
                 t.falling = false;
                 return;
             };
@@ -300,6 +311,8 @@ impl Grid {
             self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
             block.c.y -= 1;
             self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
+            // let mut check = block.c;
+            // check.y += 1;
         }
     }
 
@@ -315,12 +328,12 @@ impl Grid {
             for b in check_t.blocks.iter_mut() {
                 let check = GridCoord::new(b.c.x, b.c.y - 1, b.c.z);
                 // check that space below is vacant and not self and not below grid
-                if check.y == 0 {
-                    check_t.falling = false;
-                } else if self.grid[Self::coord_to_index(check)].is_vacant()
-                    || self.grid[Self::coord_to_index(check)] == GridBlock::Occupied(i)
-                    || check.y > 0
+                if check.y == -1
+                    || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                        && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                 {
+                    check_t.falling = false;
+                } else {
                     // keep lowering until you can't
                     b.c.y -= 1;
                 };
@@ -330,7 +343,7 @@ impl Grid {
                 // block.falling = false;
             }
         }
-        t.falling = false;
+
         for b in &check_t.blocks {
             for a in t.blocks.iter_mut() {
                 self.grid[Self::coord_to_index(a.c)] = GridBlock::Vacant;
@@ -338,23 +351,32 @@ impl Grid {
                 self.grid[Self::coord_to_index(a.c)] = GridBlock::Occupied(i);
             }
         }
+        t.falling = false;
     }
 
     // move tetris piece one grid spot in XZ plane
+    // 0 left, 1 right, 2 up, 3 down
     pub fn move_xz(&mut self, i: usize, d: usize) {
         let t = &mut self.tetris[i];
-
+        println!("move_xz function");
         // don't move if will be out of grid
+        println!("bounds: {:?}", t.bounds);
         if (0 <= t.bounds.x && t.bounds.x < GRID_X_MAX)
             && (0 <= t.bounds.z && t.bounds.z < GRID_Z_MAX)
+            && t.falling
         {
             match d {
                 // Left
                 0 => {
+                    println!("left");
                     // check move won't crash into any occupied spaces
                     for block in &t.blocks {
                         let check = GridCoord::new(block.c.x - 1, block.c.y, block.c.z);
-                        if !(self.grid[Self::coord_to_index(check)]).is_vacant() {
+
+                        if check.x == -1
+                            || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                        {
                             return;
                         };
                     }
@@ -378,7 +400,10 @@ impl Grid {
                     // check move won't crash into any occupied spaces
                     for block in &t.blocks {
                         let check = GridCoord::new(block.c.x + 1, block.c.y, block.c.z);
-                        if !(self.grid[Self::coord_to_index(check)]).is_vacant() {
+                        if check.x == 8
+                            || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                        {
                             return;
                         };
                     }
@@ -402,7 +427,10 @@ impl Grid {
                     // check move won't crash into any occupied spaces
                     for block in &t.blocks {
                         let check = GridCoord::new(block.c.x, block.c.y, block.c.z + 1);
-                        if !(self.grid[Self::coord_to_index(check)]).is_vacant() {
+                        if check.z == 8
+                            || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                        {
                             return;
                         };
                     }
@@ -426,7 +454,10 @@ impl Grid {
                     // check move won't crash into any occupied spaces
                     for block in &t.blocks {
                         let check = GridCoord::new(block.c.x, block.c.y, block.c.z - 1);
-                        if !(self.grid[Self::coord_to_index(check)]).is_vacant() {
+                        if check.z == -1
+                            || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                        {
                             return;
                         };
                     }

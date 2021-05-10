@@ -16,9 +16,9 @@ pub mod render;
 use render::{InstanceGroups, Render};
 pub mod assets;
 use assets::Assets;
-pub mod lights;
-pub mod grid;
 pub mod camera_control;
+pub mod grid;
+pub mod lights;
 
 pub const DT: f32 = 1.0 / 60.0;
 
@@ -26,7 +26,7 @@ pub trait Game: Sized {
     type StaticData;
     fn start(engine: &mut Engine) -> (Self, Self::StaticData);
     fn update(&mut self, rules: &Self::StaticData, engine: &mut Engine);
-    fn render(&mut self, rules: &Self::StaticData, assets:&Assets, igs: &mut InstanceGroups);
+    fn render(&mut self, rules: &Self::StaticData, assets: &Assets, igs: &mut InstanceGroups);
 }
 
 pub struct Engine {
