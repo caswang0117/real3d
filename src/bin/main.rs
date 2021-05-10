@@ -20,6 +20,7 @@ impl Blocks {
             for b in t.blocks.iter() {
                 blocks.push(Block {
                     c: b.c + grid.origin,
+                    color: b.color,
                 });
             }
         }
@@ -27,17 +28,32 @@ impl Blocks {
     }
 
     fn render(&self, rules: &GameData, igs: &mut InstanceGroups) {
-        igs.render_batch(
-            rules.box_model,
-            self.vec.iter().map(|block| {
-                let scale = 1.0;
+        for b in self.vec.iter() {
+            igs.render(
+                match b.color {
+                    TetrisColor::Red => rules.tetris_models[0],
+                    TetrisColor::Green => rules.tetris_models[1],
+                    TetrisColor::Blue => rules.tetris_models[2],
+                    TetrisColor::Cyan => rules.tetris_models[3],
+                    TetrisColor::Magenta => rules.tetris_models[4],
+                    TetrisColor::Yellow => rules.tetris_models[5],
+                    _ => rules.tetris_models[6],
+                },
                 real3d::render::InstanceRaw {
-                    model: (Mat4::from_translation(block.c.to_vec().cast::<f32>().unwrap())
+                    model: (Mat4::from_translation(b.c.to_vec().cast::<f32>().unwrap())
                         * Mat4::from_nonuniform_scale(0.5, 0.5, 0.5))
                     .into(),
-                }
-            }),
-        );
+                },
+            )
+        }
+
+        // igs.render_batch(
+        //     rules.box_model,
+        //     self.vec.iter().map(|block| {
+        //         let scale = 1.0;
+        //
+        //     }),
+        // );
     }
 }
 
@@ -68,9 +84,10 @@ struct Game {
     light: Light,
     camera_controller: CameraController,
 }
+
 struct GameData {
-    box_model: real3d::assets::ModelRef,
     wall_model: real3d::assets::ModelRef,
+    tetris_models: Vec<real3d::assets::ModelRef>,
 }
 
 impl real3d::Game for Game {
@@ -82,17 +99,26 @@ impl real3d::Game for Game {
         };
         let mut rng = rand::thread_rng();
 
-        let box_model = engine.load_model("block.obj");
         let wall_model = engine.load_model("floor.obj");
-        engine.set_ambient(0.5);
+
+        let tetris_models = vec![
+            // RGB CMY and kinda K
+            engine.load_model("block-red.obj"),
+            engine.load_model("block-green.obj"),
+            engine.load_model("block-blue.obj"),
+            engine.load_model("block-cyan.obj"),
+            engine.load_model("block-magenta.obj"),
+            engine.load_model("block-yellow.obj"),
+            engine.load_model("block.obj"),
+        ];
+
+        engine.set_ambient(1.0);
         let mut grid = Grid::new(cgmath::Vector3::<i32>::new(-4, 1, -3));
-        // for _ in 0..18 {
+        // for _ in 0..10 {
         //     grid.lower_tetris(0);
         // }
-        // grid.tetris[0].blocks.push(Block {
-        //     c: GridCoord::new(0, 0, 0),
-        // });
-        println!("{:#?}", grid.tetris[0]);
+        // grid.tetris[0].blocks.push(Block { c: GridCoord::new(0, 0, 0), color: TetrisColor::Mix });
+        // println!("{:#?}", grid.tetris[0]);
 
         let blocks = Blocks::new(&grid);
 
@@ -125,7 +151,7 @@ impl real3d::Game for Game {
             },
             GameData {
                 wall_model,
-                box_model,
+                tetris_models,
             },
         )
     }

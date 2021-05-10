@@ -288,8 +288,8 @@ impl Render {
                         alpha_blend: wgpu::BlendState::REPLACE,
                         color_blend: wgpu::BlendState {
                             operation: wgpu::BlendOperation::Add,
-                            src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::OneMinusDstAlpha
+                            src_factor: wgpu::BlendFactor::SrcAlpha,
+                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha
                         },
                         write_mask: wgpu::ColorWrite::ALL,
                     }],
