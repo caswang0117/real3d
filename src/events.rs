@@ -33,61 +33,39 @@ impl Events {
                     },
                 ..
             } => {
-                let is_pressed = *state == winit::event::ElementState::Pressed;
-                match keycode {
-                    winit::event::VirtualKeyCode::W => {
-                        // self.control.1 = if is_pressed { -1 } else { 0 };
-                        // true
-                    }
-                    winit::event::VirtualKeyCode::S => {
-                        // self.control.1 = if is_pressed { 1 } else { 0 };
-                        // true
-                    }
-                    winit::event::VirtualKeyCode::A => {
-                        // self.control.0 = if is_pressed { -1 } else { 0 };
-                        // true
-                    }
-                    winit::event::VirtualKeyCode::D => {
-                        // self.control.0 = if is_pressed { 1 } else { 0 };
-                        // true
-                    }
-                    _ => (),
+                let pressed = *state == winit::event::ElementState::Pressed;
+                if pressed {
+                    self.held.entry(*keycode).or_insert(0);
+                } else {
+                    self.released.insert(*keycode);
                 }
             }
-            // let pressed = *state == winit::event::ElementState::Pressed;
-            // if pressed {
-            //     self.held.entry(*keycode).or_insert(0);
-            // } else {
-            //     self.released.insert(*keycode);
-            // }
-            // }
-            // winit::event::WindowEvent::CursorMoved { position, .. } => {
-            //     self.mouse_pos = (position.x as f32, position.y as f32)
-            // }
-            // winit::event::WindowEvent::MouseInput { state, button, .. } => {
-            //     let pressed = *state == winit::event::ElementState::Pressed;
-            //     let button = match button {
-            //         winit::event::MouseButton::Left => 0,
-            //         winit::event::MouseButton::Right => 1,
-            //         winit::event::MouseButton::Middle => 2,
-            //         winit::event::MouseButton::Other(num) => *num,
-            //     } as usize;
-            //     self.mouse_buttons.reserve(button);
-            //     self.mouse_buttons_released.reserve(button);
-            //     while self.mouse_buttons.len() <= button {
-            //         self.mouse_buttons.push(None);
-            //         self.mouse_buttons_released.push(false);
-            //     }
-            //     if pressed {
-            //         self.mouse_buttons[button] = Some(0);
-            //     } else {
-            //         self.mouse_buttons_released[button] = true;
-            //     }
-            // }
+            winit::event::WindowEvent::CursorMoved { position, .. } => {
+                self.mouse_pos = (position.x as f32, position.y as f32)
+            }
+            winit::event::WindowEvent::MouseInput { state, button, .. } => {
+                let pressed = *state == winit::event::ElementState::Pressed;
+                let button = match button {
+                    winit::event::MouseButton::Left => 0,
+                    winit::event::MouseButton::Right => 1,
+                    winit::event::MouseButton::Middle => 2,
+                    winit::event::MouseButton::Other(num) => *num,
+                } as usize;
+                self.mouse_buttons.reserve(button);
+                self.mouse_buttons_released.reserve(button);
+                while self.mouse_buttons.len() <= button {
+                    self.mouse_buttons.push(None);
+                    self.mouse_buttons_released.push(false);
+                }
+                if pressed {
+                    self.mouse_buttons[button] = Some(0);
+                } else {
+                    self.mouse_buttons_released[button] = true;
+                }
+            }
             _ => {} // mouse, etc
         }
     }
-
     pub(crate) fn next_frame(&mut self) {
         let mut keep_release = vec![];
         for k in self.released.iter() {

@@ -1,73 +1,33 @@
-use crate::camera::Camera;
 use crate::geom::*;
-use winit::event::*;
 
 pub struct CameraController {
     speed: f32,
-    is_forward_pressed: bool,
-    is_backward_pressed: bool,
-    is_left_pressed: bool,
-    is_right_pressed: bool,
 }
 
 impl CameraController {
     pub fn new(speed: f32) -> Self {
-        Self {
-            speed,
-            is_forward_pressed: false,
-            is_backward_pressed: false,
-            is_left_pressed: false,
-            is_right_pressed: false,
-        }
+        Self { speed }
     }
 
-    pub fn process_events(&mut self, event: &WindowEvent) -> bool {
-        match event {
-            WindowEvent::KeyboardInput {
-                input:
-                    KeyboardInput {
-                        state,
-                        virtual_keycode: Some(keycode),
-                        ..
-                    },
-                ..
-            } => {
-                let is_pressed = *state == ElementState::Pressed;
-                match keycode {
-                    VirtualKeyCode::Up => {
-                        self.is_forward_pressed = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::Left => {
-                        self.is_left_pressed = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::Down => {
-                        self.is_backward_pressed = is_pressed;
-                        true
-                    }
-                    VirtualKeyCode::Right => {
-                        self.is_right_pressed = is_pressed;
-                        true
-                    }
-                    _ => false,
-                }
-            }
-            _ => false,
-        }
-    }
-
-    pub fn update_camera(&self, camera: &mut Camera) {
+    pub fn update(&mut self, engine: &mut crate::Engine) {
+        use crate::events::KeyCode;
+        let (upk, downk, leftk, rightk) = (
+            engine.events.key_held(KeyCode::Up),
+            engine.events.key_held(KeyCode::Down),
+            engine.events.key_held(KeyCode::Left),
+            engine.events.key_held(KeyCode::Right),
+        );
+        let camera = engine.camera_mut();
         let forward = camera.target - camera.eye;
         let forward_norm = forward.normalize();
         let forward_mag = forward.magnitude();
 
         // Prevents glitching when camera gets too close to the
         // center of the scene.
-        if self.is_forward_pressed && forward_mag > self.speed {
+        if upk && forward_mag > self.speed {
             camera.eye += forward_norm * self.speed;
         }
-        if self.is_backward_pressed {
+        if downk {
             camera.eye -= forward_norm * self.speed;
         }
 
@@ -77,13 +37,13 @@ impl CameraController {
         let forward = camera.target - camera.eye;
         let forward_mag = forward.magnitude();
 
-        if self.is_right_pressed {
+        if rightk {
             // Rescale the distance between the target and eye so
             // that it doesn't change. The eye therefore still
             // lies on the circle made by the target and eye.
             camera.eye = camera.target - (forward + right * self.speed).normalize() * forward_mag;
         }
-        if self.is_left_pressed {
+        if leftk {
             camera.eye = camera.target - (forward - right * self.speed).normalize() * forward_mag;
         }
     }

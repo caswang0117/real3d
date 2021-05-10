@@ -497,28 +497,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
-name = "engine3d"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytemuck",
- "cgmath",
- "env_logger",
- "fs_extra",
- "futures",
- "glob",
- "gltf",
- "image",
- "log",
- "notify",
- "rand",
- "shaderc",
- "tobj",
- "wgpu",
- "winit",
-]
-
-[[package]]
 name = "env_logger"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1749,6 +1727,28 @@ dependencies = [
  "crossbeam-utils",
  "lazy_static",
  "num_cpus",
+]
+
+[[package]]
+name = "real3d"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "cgmath",
+ "env_logger",
+ "fs_extra",
+ "futures",
+ "glob",
+ "gltf",
+ "image",
+ "log",
+ "notify",
+ "rand",
+ "shaderc",
+ "tobj",
+ "wgpu",
+ "winit",
 ]
 
 [[package]]

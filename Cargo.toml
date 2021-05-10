@@ -1,5 +1,5 @@
 [package]
-name = "engine3d"
+name = "real3d"
 version = "0.1.0"
 authors = ["somebody"]
 edition = "2018"

@@ -4,9 +4,9 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     platform::run_return::EventLoopExtRunReturn,
 };
-//pub mod anim;
+pub mod anim;
 pub mod camera;
-// pub mod collision;
+pub mod collision;
 pub mod events;
 pub mod geom;
 pub mod model;
@@ -18,6 +18,7 @@ pub mod assets;
 use assets::Assets;
 pub mod lights;
 pub mod grid;
+pub mod camera_control;
 
 pub const DT: f32 = 1.0 / 60.0;
 
@@ -47,7 +48,11 @@ impl Engine {
     pub fn load_gltf(
         &mut self,
         gltf: impl AsRef<Path>,
-    ) -> Vec<assets::ModelRef>{
+    ) -> (
+        Vec<assets::ModelRef>,
+        Vec<assets::RigRef>,
+        Vec<assets::AnimRef>,
+    ) {
         self.assets.load_gltf(
             &self.render.device,
             &self.render.queue,
