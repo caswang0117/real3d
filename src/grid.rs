@@ -1,6 +1,7 @@
 use cgmath::Point3;
 use rand::Rng;
 use crate::geom::*;
+use crate::assets::ModelRef;
 
 pub type GridCoord = cgmath::Point3<i32>;
 pub type TetrisBounds = cgmath::Point3<i32>; // top view, y is lowest point
@@ -13,6 +14,7 @@ pub const GRID_Z_MAX: i32 = 8;
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Block {
     pub c: GridCoord,
+    pub color: TetrisColor
 }
 
 // impl Shape for Block {
@@ -20,6 +22,16 @@ pub struct Block {
 //         self.c += GridCoord::new(v.x as i32,v.y as i32,v.z as i32);
 //     }
 // }
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum TetrisColor{
+    Red,
+    Green,
+    Blue,
+    Cyan,
+    Magenta,
+    Yellow,
+    Mix
+}
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Tetris {
@@ -30,6 +42,7 @@ pub struct Tetris {
 
 impl Tetris {
     fn gen_random_tetris() -> Self {
+        use TetrisColor::*;
         let mut rng = rand::thread_rng();
         let shape: usize = rng.gen_range(0..6);
         println!("Shape {}",shape);
@@ -40,27 +53,35 @@ impl Tetris {
                     blocks: vec![
                         Block {
                             c: GridCoord::new(5, 15, 5),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(6, 15, 6),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(4, 15, 6),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(6, 15, 5),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(5, 14, 5),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(6, 14, 6),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(4, 14, 6),
+                            color: Red
                         },
                         Block {
                             c: GridCoord::new(6, 14, 5),
+                            color: Red
                         },
                     ],
                     bounds: TetrisBounds::new(4, 14, 6),
@@ -73,15 +94,19 @@ impl Tetris {
                     blocks: vec![
                         Block {
                             c: GridCoord::new(5, 13, 5),
+                            color: Green
                         },
                         Block {
                             c: GridCoord::new(5, 13, 5),
+                            color: Green
                         },
                         Block {
                             c: GridCoord::new(5, 14, 5),
+                            color: Green
                         },
                         Block {
                             c: GridCoord::new(5, 15, 5),
+                            color: Green
                         },
                     ],
                     bounds: TetrisBounds::new(5, 13, 5),
@@ -94,19 +119,24 @@ impl Tetris {
                     blocks: vec![
                         Block {
                             c: GridCoord::new(5, 14, 5),
+                            color:Blue
                         },
                         Block {
                             c: GridCoord::new(5, 15, 5),
+                            color:Blue
                         },
                         Block {
                             c: GridCoord::new(4, 14, 5),
+                            color:Blue
                         },
                         Block {
                             c: GridCoord::new(6, 15, 5),
+                            color:Blue
                         },
                     ],
                     bounds: TetrisBounds::new(4, 14, 5),
                     falling: true,
+
                 }
             }
             3 => {
@@ -115,15 +145,19 @@ impl Tetris {
                     blocks: vec![
                         Block {
                             c: GridCoord::new(4, 14, 4),
+                            color: Cyan
                         },
                         Block {
                             c: GridCoord::new(4, 15, 4),
+                            color: Cyan
                         },
                         Block {
                             c: GridCoord::new(3, 14, 4),
+                            color: Cyan
                         },
                         Block {
                             c: GridCoord::new(4, 14, 5),
+                            color: Cyan
                         },
                     ],
                     bounds: TetrisBounds::new(3, 14, 5),
@@ -136,15 +170,19 @@ impl Tetris {
                     blocks: vec![
                         Block {
                             c: GridCoord::new(3, 13, 3),
+                            color:Magenta
                         },
                         Block {
                             c: GridCoord::new(3, 14, 3),
+                            color:Magenta
                         },
                         Block {
                             c: GridCoord::new(4, 14, 3),
+                            color:Magenta
                         },
                         Block {
                             c: GridCoord::new(4, 15, 3),
+                            color:Magenta
                         },
                     ],
                     bounds: TetrisBounds::new(3, 13, 3),
@@ -157,15 +195,19 @@ impl Tetris {
                     blocks: vec![
                         Block {
                             c: GridCoord::new(3, 13, 3),
+                            color:Yellow
                         },
                         Block {
                             c: GridCoord::new(4, 13, 3),
+                            color:Yellow
                         },
                         Block {
                             c: GridCoord::new(3, 14, 3),
+                            color:Yellow
                         },
                         Block {
                             c: GridCoord::new(3, 15, 3),
+                            color:Yellow
                         },
                     ],
                     bounds: TetrisBounds::new(3, 13, 3),
