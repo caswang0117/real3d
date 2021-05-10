@@ -1,5 +1,6 @@
-use cgmath;
+use cgmath::Point3;
 use rand::Rng;
+use crate::geom::*;
 
 pub type GridCoord = cgmath::Point3<i32>;
 pub type TetrisBounds = cgmath::Point3<i32>; // top view, y is lowest point
@@ -14,6 +15,12 @@ pub struct Block {
     pub c: GridCoord,
 }
 
+// impl Shape for Block {
+//     fn translate(&mut self, v: Vec3) {
+//         self.c += GridCoord::new(v.x as i32,v.y as i32,v.z as i32);
+//     }
+// }
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Tetris {
     pub blocks: Vec<Block>,
@@ -24,7 +31,8 @@ pub struct Tetris {
 impl Tetris {
     fn gen_random_tetris() -> Self {
         let mut rng = rand::thread_rng();
-        let shape: usize = rng.gen_range(0..5);
+        let shape: usize = rng.gen_range(0..6);
+        println!("Shape {}",shape);
         match shape {
             0 => {
                 // 2x2x2 cube
@@ -190,13 +198,19 @@ impl GridBlock {
 
 pub struct Grid {
     pub tetris: Vec<Tetris>,
+    pub current: usize,
+    pub origin: cgmath::Vector3<i32>,
     grid: [GridBlock; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
 }
 
 impl Grid {
-    pub fn new() -> Self {
+    pub fn new(origin: cgmath::Vector3<i32>) -> Self {
         Self {
-            tetris: vec![],
+            tetris: vec![
+                Tetris::gen_random_tetris()
+            ],
+            current: 0,
+            origin,
             grid: [GridBlock::Vacant; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
         }
     }

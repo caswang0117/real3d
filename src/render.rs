@@ -20,7 +20,7 @@ pub(crate) struct Render {
     swap_chain: wgpu::SwapChain,
     pub(crate) size: winit::dpi::PhysicalSize<u32>,
     static_render_pipeline: wgpu::RenderPipeline,
-    animated_render_pipeline: wgpu::RenderPipeline,
+    // animated_render_pipeline: wgpu::RenderPipeline,
     pub(crate) texture_layout: wgpu::BindGroupLayout,
     pub(crate) camera: Camera,
     uniforms: Uniforms,
@@ -101,13 +101,13 @@ impl Render {
             });
 
         let camera = Camera {
-            eye: (0.0, 5.0, -10.0).into(),
-            target: (0.0, 0.0, 0.0).into(),
+            eye: (0.0, 10.0, -20.0).into(),
+            target: (0.0, 10.0, 0.0).into(),
             up: cgmath::Vector3::unit_y(),
             aspect: sc_desc.width as f32 / sc_desc.height as f32,
-            fovy: 45.0,
+            fovy: 60.0,
             znear: 0.1,
-            zfar: 200.0,
+            zfar: 50.0,
         };
 
         let mut uniforms = Uniforms::new();
@@ -286,64 +286,9 @@ impl Render {
                     targets: &[wgpu::ColorTargetState {
                         format: sc_desc.format,
                         alpha_blend: wgpu::BlendState::REPLACE,
-                        color_blend: wgpu::BlendState::REPLACE,
-                        write_mask: wgpu::ColorWrite::ALL,
-                    }],
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList,
-                    strip_index_format: None,
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: wgpu::CullMode::Back,
-                    // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                    polygon_mode: wgpu::PolygonMode::Fill,
-                },
-                depth_stencil: Some(wgpu::DepthStencilState {
-                    format: texture::Texture::DEPTH_FORMAT,
-                    depth_write_enabled: true,
-                    depth_compare: wgpu::CompareFunction::Less,
-                    stencil: wgpu::StencilState::default(),
-                    bias: wgpu::DepthBiasState::default(),
-                    // Setting this to true requires Features::DEPTH_CLAMPING
-                    clamp_depth: false,
-                }),
-                multisample: wgpu::MultisampleState {
-                    count: 1,
-                    mask: !0,
-                    alpha_to_coverage_enabled: false,
-                },
-            })
-        };
-        let animated_render_pipeline = {
-            let animated_render_pipeline_layout =
-                device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: Some("Animated Render Pipeline Layout"),
-                    bind_group_layouts: &[
-                        &texture_bind_group_layout,
-                        &uniform_bind_group_layout,
-                        &light_bind_group_layout,
-                        &bone_bind_group_layout,
-                    ],
-                    push_constant_ranges: &[],
-                });
-
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("Animated Render Pipeline"),
-                layout: Some(&animated_render_pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: &bones_vs_module,
-                    entry_point: "main",
-                    buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &fs_module,
-                    entry_point: "main",
-                    targets: &[wgpu::ColorTargetState {
-                        format: sc_desc.format,
-                        alpha_blend: wgpu::BlendState::REPLACE,
                         color_blend: wgpu::BlendState {
                             operation: wgpu::BlendOperation::Add,
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
+                            src_factor: wgpu::BlendFactor::One,
                             dst_factor: wgpu::BlendFactor::OneMinusDstAlpha
                         },
                         write_mask: wgpu::ColorWrite::ALL,
@@ -373,6 +318,65 @@ impl Render {
                 },
             })
         };
+        // let animated_render_pipeline = {
+        //     let animated_render_pipeline_layout =
+        //         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        //             label: Some("Animated Render Pipeline Layout"),
+        //             bind_group_layouts: &[
+        //                 &texture_bind_group_layout,
+        //                 &uniform_bind_group_layout,
+        //                 &light_bind_group_layout,
+        //                 &bone_bind_group_layout,
+        //             ],
+        //             push_constant_ranges: &[],
+        //         });
+        //
+        //     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        //         label: Some("Animated Render Pipeline"),
+        //         layout: Some(&animated_render_pipeline_layout),
+        //         vertex: wgpu::VertexState {
+        //             module: &bones_vs_module,
+        //             entry_point: "main",
+        //             buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
+        //         },
+        //         fragment: Some(wgpu::FragmentState {
+        //             module: &fs_module,
+        //             entry_point: "main",
+        //             targets: &[wgpu::ColorTargetState {
+        //                 format: sc_desc.format,
+        //                 alpha_blend: wgpu::BlendState::REPLACE,
+        //                 color_blend: wgpu::BlendState {
+        //                     operation: wgpu::BlendOperation::Add,
+        //                     src_factor: wgpu::BlendFactor::SrcAlpha,
+        //                     dst_factor: wgpu::BlendFactor::OneMinusDstAlpha
+        //                 },
+        //                 write_mask: wgpu::ColorWrite::ALL,
+        //             }],
+        //         }),
+        //         primitive: wgpu::PrimitiveState {
+        //             topology: wgpu::PrimitiveTopology::TriangleList,
+        //             strip_index_format: None,
+        //             front_face: wgpu::FrontFace::Ccw,
+        //             cull_mode: wgpu::CullMode::Back,
+        //             // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+        //             polygon_mode: wgpu::PolygonMode::Fill,
+        //         },
+        //         depth_stencil: Some(wgpu::DepthStencilState {
+        //             format: texture::Texture::DEPTH_FORMAT,
+        //             depth_write_enabled: true,
+        //             depth_compare: wgpu::CompareFunction::Less,
+        //             stencil: wgpu::StencilState::default(),
+        //             bias: wgpu::DepthBiasState::default(),
+        //             // Setting this to true requires Features::DEPTH_CLAMPING
+        //             clamp_depth: false,
+        //         }),
+        //         multisample: wgpu::MultisampleState {
+        //             count: 1,
+        //             mask: !0,
+        //             alpha_to_coverage_enabled: false,
+        //         },
+        //     })
+        // };
 
         Self {
             surface,
@@ -382,7 +386,7 @@ impl Render {
             swap_chain,
             size,
             static_render_pipeline,
-            animated_render_pipeline,
+            // animated_render_pipeline,
             camera,
             uniform_buffer,
             uniform_bind_group,
@@ -493,23 +497,23 @@ impl Render {
                     &self.light_bind_group,
                 );
             }
-            render_pass.set_pipeline(&self.animated_render_pipeline);
-            for (mr, (irs, buf, _cap, bones)) in self.instance_groups.anim_groups.iter() {
-                let model = assets.get_model(*mr).unwrap();
-                for (i, (_ir, bones)) in irs.iter().zip(bones.chunks_exact(BONE_MAX)).enumerate() {
-                    let i = i as u64;
-                    render_pass.set_vertex_buffer(1, buf.as_ref().unwrap().slice(i..(i + InstanceRaw::desc().array_stride)));
-                    self.queue
-                        .write_buffer(&self.bone_buffer, 0, bytemuck::cast_slice(&bones));
-                    // TODO set up bones for model here and bone bind group?
-                    render_pass.draw_model_skinned(
-                        model,
-                        &self.uniform_bind_group,
-                        &self.light_bind_group,
-                        &self.bone_bind_group,
-                    );
-                }
-            }
+            // render_pass.set_pipeline(&self.animated_render_pipeline);
+            // for (mr, (irs, buf, _cap, bones)) in self.instance_groups.anim_groups.iter() {
+            //     let model = assets.get_model(*mr).unwrap();
+            //     for (i, (_ir, bones)) in irs.iter().zip(bones.chunks_exact(BONE_MAX)).enumerate() {
+            //         let i = i as u64;
+            //         render_pass.set_vertex_buffer(1, buf.as_ref().unwrap().slice(i..(i + InstanceRaw::desc().array_stride)));
+            //         self.queue
+            //             .write_buffer(&self.bone_buffer, 0, bytemuck::cast_slice(&bones));
+            //         // TODO set up bones for model here and bone bind group?
+            //         render_pass.draw_model_skinned(
+            //             model,
+            //             &self.uniform_bind_group,
+            //             &self.light_bind_group,
+            //             &self.bone_bind_group,
+            //         );
+            //     }
+            // }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

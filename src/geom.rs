@@ -6,6 +6,7 @@ pub type Mat3 = cgmath::Matrix3<f32>;
 pub type Mat4 = cgmath::Matrix4<f32>;
 pub type Quat = cgmath::Quaternion<f32>;
 pub const PI: f32 = std::f32::consts::PI;
+use crate::render::InstanceGroups;
 
 pub trait Shape {
     fn translate(&mut self, v: Vec3);
@@ -59,7 +60,6 @@ impl Shape for AABB {
         self.c += v;
     }
 }
-
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Ray {
     pub p: Pos3,
