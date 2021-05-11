@@ -5,6 +5,7 @@ use winit::{
     platform::run_return::EventLoopExtRunReturn,
 };
 pub mod anim;
+pub mod audio;
 pub mod camera;
 pub mod collision;
 pub mod events;

@@ -1,7 +1,7 @@
 [package]
 name = "real3d"
 version = "0.1.0"
-authors = ["somebody"]
+authors = ["Jerie Wang and Cassie Wang"]
 edition = "2018"
 
 [dependencies]
@@ -13,6 +13,7 @@ image = "0.23"
 log = "0.4"
 tobj = "2.0"
 wgpu = "0.7.1"
+kira = "0.5.1"
 notify = "4.0.15"
 env_logger = "0.7"
 rand = "0.8.3"

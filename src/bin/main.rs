@@ -1,7 +1,8 @@
+use kira::{manager::AudioManager, manager::AudioManagerSettings, sound::SoundSettings, Tempo};
 use rand;
 use real3d::{
-    camera_control::*, events::*, geom::*, grid::*, lights::Light, render::InstanceGroups, run,
-    Engine, DT,
+    audio::*, camera_control::*, events::*, geom::*, grid::*, lights::Light,
+    render::InstanceGroups, run, Engine, DT,
 };
 use std::ops::Add;
 use winit;
@@ -82,6 +83,7 @@ struct Game {
     grid: Grid,
     wall: Base,
     light: Light,
+    audio: Audio,
     camera_controller: CameraController,
 }
 
@@ -140,6 +142,23 @@ impl real3d::Game for Game {
         //         .collect::<Vec<_>>(),
         // };
         let light = Light::point(Pos3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
+
+        let mut audio_manager = AudioManager::new(AudioManagerSettings::default()).unwrap();
+        let gameplay = audio_manager
+            .load_sound(
+                "content/Tetris 99 - Main Theme.mp3",
+                SoundSettings::default(), // SoundSettings::new().semantic_duration(Tempo(128.0).beats_to_seconds(8.0)),
+            )
+            .unwrap();
+        let clear = audio_manager
+            .load_sound(
+                "content/Clear Sound.mp3",
+                SoundSettings::default(), // SoundSettings::new().semantic_duration(Tempo(128.0).beats_to_seconds(8.0)),
+            )
+            .unwrap();
+        let sound_handles = vec![gameplay, clear];
+        let audio = Audio::new(audio_manager, sound_handles);
+
         let camera_controller = CameraController::new(1.0);
         (
             Self {
@@ -147,6 +166,7 @@ impl real3d::Game for Game {
                 blocks,
                 grid,
                 wall: base,
+                audio,
                 light,
             },
             GameData {
@@ -167,21 +187,39 @@ impl real3d::Game for Game {
     }
     fn update(&mut self, _rules: &Self::StaticData, engine: &mut Engine) {
         self.camera_controller.update(engine);
+        // background audio
+        self.audio
+            .play(SoundID(0), true, Some(0.0), AlreadyPlayingAction::Nothing);
         let curr = self.grid.current;
 
-        // println!("current:{}", curr);
-        // println!("falling?: {}", self.grid.tetris[curr].falling);
-        if !self.grid.tetris[curr].falling && self.grid.tetris.len() == 6 {
-            self.grid.clear_plane(1);
-            self.blocks = Blocks::new(&self.grid);
-        }
+        // if !self.grid.tetris[curr].falling && (self.grid.tetris.len()% 10 == 0 {
+        //     self.grid.clear_plane(1);
+        //     self.blocks = Blocks::new(&self.grid);
+        // }
 
         // when current piece lands, check to clear plane and spawn new piece
         if !self.grid.tetris[curr].falling && !self.grid.end {
-            // TODO check if plane needs to be cleared
+            // check if plane needs to be cleared
+            let planes = self.grid.check_planes();
+            println!("planes: {:?}", planes);
+            if !planes.is_empty() {
+                for p in planes {
+                    self.grid.clear_plane(p);
+                    self.blocks = Blocks::new(&self.grid);
+                    self.audio
+                        .play(SoundID(1), true, Some(0.0), AlreadyPlayingAction::Nothing);
+                }
+            } else if self.grid.tetris.len() % 8 == 0 {
+                self.grid.clear_plane(2);
+                self.blocks = Blocks::new(&self.grid);
+                self.audio
+                    .play(SoundID(1), true, Some(0.0), AlreadyPlayingAction::Nothing);
+            }
+            // spawn new piece
             self.grid.add_tetris();
             self.blocks = Blocks::new(&self.grid);
         }
+
         if self.grid.tetris[curr].falling && engine.frame % 60 == 0 {
             self.grid.lower_tetris(curr);
             self.blocks = Blocks::new(&self.grid);

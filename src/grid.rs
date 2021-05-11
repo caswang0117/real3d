@@ -285,10 +285,27 @@ impl Grid {
         (x, y, z)
     }
 
-    pub fn get_plane(&mut self, y: i32) -> &mut [GridBlock] {
+    pub fn get_plane(&self, y: i32) -> &[GridBlock] {
         debug_assert!(0 <= y && y < GRID_Y_MAX);
-        &mut self.grid
+        &self.grid
             [(y * GRID_Z_MAX * GRID_X_MAX) as usize..((y + 1) * GRID_Z_MAX * GRID_X_MAX) as usize]
+    }
+
+    // check if any planes are full, return first full vec
+    pub fn check_planes(&self) -> Vec<i32> {
+        let mut planes = vec![];
+        for i in 0..GRID_Y_MAX {
+            let mut vacant = false;
+            for g in self.get_plane(i) {
+                if *g == GridBlock::Vacant {
+                    vacant = true;
+                }
+            }
+            if !vacant {
+                planes.push(i);
+            }
+        }
+        planes
     }
 
     // clear blocks on plane and lower blocks above
