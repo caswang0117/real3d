@@ -209,11 +209,11 @@ impl real3d::Game for Game {
                     self.audio
                         .play(SoundID(1), true, Some(0.0), AlreadyPlayingAction::Nothing);
                 }
-            } else if self.grid.tetris.len() % 8 == 0 {
+            } else if self.grid.tetris.len() % 15 == 0 {
                 self.grid.clear_plane(2);
                 self.blocks = Blocks::new(&self.grid);
                 self.audio
-                    .play(SoundID(1), true, Some(0.0), AlreadyPlayingAction::Nothing);
+                    .play(SoundID(1), false, Some(0.0), AlreadyPlayingAction::Nothing);
             }
             // spawn new piece
             self.grid.add_tetris();
