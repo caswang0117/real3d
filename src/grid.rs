@@ -7,10 +7,14 @@ use rand::Rng;
 pub type GridCoord = cgmath::Point3<i32>;
 pub type TetrisBounds = cgmath::Point3<i32>; // top view, y is lowest point
 
+use serde::{Deserialize, Serialize, Serializer};
+use serde::ser::SerializeTuple;
+
 pub const GRID_SCALE: f32 = 32.0;
 pub const GRID_X_MAX: i32 = 8;
 pub const GRID_Y_MAX: i32 = 16;
 pub const GRID_Z_MAX: i32 = 8;
+
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Block {
@@ -18,12 +22,13 @@ pub struct Block {
     pub color: TetrisColor,
 }
 
+
 // impl Shape for Block {
 //     fn translate(&mut self, v: Vec3) {
 //         self.c += GridCoord::new(v.x as i32,v.y as i32,v.z as i32);
 //     }
 // }
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum TetrisColor {
     Red,
     Green,
@@ -37,7 +42,6 @@ pub enum TetrisColor {
 #[derive(Clone, PartialEq, Debug)]
 pub struct Tetris {
     pub blocks: Vec<Block>,
-    pub bounds: TetrisBounds,
     pub falling: bool,
 }
 
@@ -85,7 +89,6 @@ impl Tetris {
                             color: Red,
                         },
                     ],
-                    bounds: TetrisBounds::new(4, 14, 5),
                     falling: true,
                 }
             }
@@ -110,7 +113,6 @@ impl Tetris {
                             color: Green,
                         },
                     ],
-                    bounds: TetrisBounds::new(4, 12, 4),
                     falling: true,
                 }
             }
@@ -135,7 +137,6 @@ impl Tetris {
                             color: Blue,
                         },
                     ],
-                    bounds: TetrisBounds::new(4, 14, 5),
                     falling: true,
                 }
             }
@@ -160,7 +161,6 @@ impl Tetris {
                             color: Cyan,
                         },
                     ],
-                    bounds: TetrisBounds::new(3, 14, 5),
                     falling: true,
                 }
             }
@@ -185,7 +185,6 @@ impl Tetris {
                             color: Magenta,
                         },
                     ],
-                    bounds: TetrisBounds::new(3, 13, 3),
                     falling: true,
                 }
             }
@@ -210,20 +209,18 @@ impl Tetris {
                             color: Yellow,
                         },
                     ],
-                    bounds: TetrisBounds::new(3, 13, 3),
                     falling: true,
                 }
             }
             _ => Tetris {
                 blocks: vec![],
-                bounds: TetrisBounds::new(0, 0, 0),
                 falling: false,
             }, // will not be reached
         }
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize)]
 pub enum GridBlock {
     Vacant,
     Occupied(usize),
@@ -489,10 +486,7 @@ impl Grid {
         let t = &mut self.tetris[i];
         println!("move_xz function");
         // don't move if will be out of grid
-        println!("bounds: {:?}", t.bounds);
-        if (0 <= t.bounds.x && t.bounds.x < GRID_X_MAX)
-            && (0 <= t.bounds.z && t.bounds.z < GRID_Z_MAX)
-            && t.falling
+        if t.falling
         {
             match d {
                 // Left
@@ -510,20 +504,13 @@ impl Grid {
                         };
                     }
 
-                    let mut new_x = t.bounds.x;
 
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.x -= 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
-                        // find new left bound
-                        if block.c.x < new_x {
-                            new_x = block.c.x;
-                        }
                     }
-                    // update bounds
-                    t.bounds.x = new_x;
                 }
                 // Right
                 1 => {
@@ -538,20 +525,13 @@ impl Grid {
                         };
                     }
 
-                    let mut new_x = t.bounds.x;
 
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.x += 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
-                        // find new right bound
-                        if block.c.x > new_x {
-                            new_x = block.c.x;
-                        }
                     }
-                    // update bounds
-                    t.bounds.x = new_x;
                 }
                 // Up
                 2 => {
@@ -566,20 +546,12 @@ impl Grid {
                         };
                     }
 
-                    let mut new_z = t.bounds.z;
-
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.z += 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
-                        // find new top bound
-                        if block.c.z > new_z {
-                            new_z = block.c.z;
-                        }
                     }
-                    // update bounds
-                    t.bounds.z = new_z;
                 }
                 // Down
                 3 => {
@@ -594,20 +566,12 @@ impl Grid {
                         };
                     }
 
-                    let mut new_z = t.bounds.z;
-
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.z -= 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
-                        // find new bottom bound
-                        if block.c.z < new_z {
-                            new_z = block.c.z;
-                        }
                     }
-                    // update bounds
-                    t.bounds.z = new_z;
                 }
                 _ => (),
             }
