@@ -322,7 +322,6 @@ impl real3d::Game for Game {
 
 fn main() {
     env_logger::init();
-    let title = env!("CARGO_PKG_NAME");
-    let window = winit::window::WindowBuilder::new().with_title(title);
+    let window = winit::window::WindowBuilder::new().with_title("Tetris 3D");
     run::<GameData, Game>(window, std::path::Path::new("content"));
 }
