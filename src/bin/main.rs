@@ -278,43 +278,29 @@ impl real3d::Game for Game {
             self.blocks = Blocks::new(&self.grid);
         }
 
-        if self.grid.tetris[curr].falling && engine.frame % 60 == 0 {
+        if self.grid.tetris[curr].falling && engine.frame % 30 == 0 {
             self.grid.lower_tetris(curr);
             self.blocks = Blocks::new(&self.grid);
         }
 
         if engine.events.key_pressed(KeyCode::D) {
             self.grid.move_xz(curr, 0);
+            self.blocks = Blocks::new(&self.grid);
         } else if engine.events.key_pressed(KeyCode::A) {
             self.grid.move_xz(curr, 1);
+            self.blocks = Blocks::new(&self.grid);
         } else if engine.events.key_pressed(KeyCode::W) {
             self.grid.move_xz(curr, 2);
+            self.blocks = Blocks::new(&self.grid);
         } else if engine.events.key_pressed(KeyCode::S) {
             self.grid.move_xz(curr, 3);
+            self.blocks = Blocks::new(&self.grid);
         } else if engine.events.key_held(KeyCode::Down) {
             self.grid.lower_tetris(curr);
             self.blocks = Blocks::new(&self.grid);
         }
 
-        // a, d rotate the point light
         let light_pos = self.light.position();
-        // let light_pos = if engine.events.key_held(KeyCode::A) {
-        //     Quat::from(cgmath::Euler::new(
-        //         cgmath::Deg(0.0),
-        //         cgmath::Deg(-90.0 * DT),
-        //         cgmath::Deg(0.0),
-        //     ))
-        //     .rotate_point(light_pos)
-        // } else if engine.events.key_held(KeyCode::D) {
-        //     Quat::from(cgmath::Euler::new(
-        //         cgmath::Deg(0.0),
-        //         cgmath::Deg(90.0 * DT),
-        //         cgmath::Deg(0.0),
-        //     ))
-        //     .rotate_point(light_pos)
-        // } else {
-        //     light_pos
-        // };
         self.light = Light::point(light_pos, self.light.color());
         engine.set_lights(vec![self.light]);
     }

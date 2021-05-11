@@ -121,19 +121,19 @@ impl Tetris {
                     // upside down T
                     blocks: vec![
                         Block {
-                            c: GridCoord::new(5, 14, 5),
+                            c: GridCoord::new(5, 14, 4),
                             color: Blue,
                         },
                         Block {
-                            c: GridCoord::new(5, 15, 5),
+                            c: GridCoord::new(5, 15, 4),
                             color: Blue,
                         },
                         Block {
-                            c: GridCoord::new(4, 14, 5),
+                            c: GridCoord::new(4, 14, 4),
                             color: Blue,
                         },
                         Block {
-                            c: GridCoord::new(6, 15, 5),
+                            c: GridCoord::new(6, 15, 4),
                             color: Blue,
                         },
                     ],
@@ -169,19 +169,19 @@ impl Tetris {
                 Tetris {
                     blocks: vec![
                         Block {
-                            c: GridCoord::new(3, 13, 3),
+                            c: GridCoord::new(4, 13, 4),
                             color: Magenta,
                         },
                         Block {
-                            c: GridCoord::new(3, 14, 3),
+                            c: GridCoord::new(4, 14, 4),
                             color: Magenta,
                         },
                         Block {
-                            c: GridCoord::new(4, 14, 3),
+                            c: GridCoord::new(5, 14, 4),
                             color: Magenta,
                         },
                         Block {
-                            c: GridCoord::new(4, 15, 3),
+                            c: GridCoord::new(5, 15, 4),
                             color: Magenta,
                         },
                     ],
@@ -193,19 +193,19 @@ impl Tetris {
                     // L
                     blocks: vec![
                         Block {
-                            c: GridCoord::new(3, 13, 3),
+                            c: GridCoord::new(4, 13, 4),
                             color: Yellow,
                         },
                         Block {
-                            c: GridCoord::new(4, 13, 3),
+                            c: GridCoord::new(5, 13, 4),
                             color: Yellow,
                         },
                         Block {
-                            c: GridCoord::new(3, 14, 3),
+                            c: GridCoord::new(4, 14, 4),
                             color: Yellow,
                         },
                         Block {
-                            c: GridCoord::new(3, 15, 3),
+                            c: GridCoord::new(4, 15, 4),
                             color: Yellow,
                         },
                     ],
