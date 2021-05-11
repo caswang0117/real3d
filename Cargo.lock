@@ -2079,31 +2079,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "real3d"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytemuck",
- "cgmath",
- "env_logger",
- "fs_extra",
- "futures",
- "glob",
- "gltf",
- "image",
- "kira",
- "log",
- "notify",
- "rand",
- "serde",
- "serde_json",
- "shaderc",
- "tobj",
- "wgpu",
- "winit",
-]
-
-[[package]]
 name = "redox_syscall"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2349,6 +2324,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "tetris3d"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "cgmath",
+ "env_logger",
+ "fs_extra",
+ "futures",
+ "glob",
+ "gltf",
+ "image",
+ "kira",
+ "log",
+ "notify",
+ "rand",
+ "serde",
+ "serde_json",
+ "shaderc",
+ "tobj",
+ "wgpu",
+ "winit",
 ]
 
 [[package]]

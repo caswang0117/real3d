@@ -16,7 +16,65 @@ pub struct Blocks {
 
 impl Blocks {
     fn new(grid: &Grid) -> Self {
-        let mut blocks: Vec<Block> = vec![];
+        let mut blocks: Vec<Block> = vec![
+            // T
+            Block { c: GridCoord::new(-0 + 8 + 2, 5 + 20, 20), color: TetrisColor::Red },
+            Block { c: GridCoord::new(-1 + 8 + 2, 5 + 20, 20), color: TetrisColor::Red },
+            Block { c: GridCoord::new(-2 + 8 + 2, 5 + 20, 20), color: TetrisColor::Red },
+            Block { c: GridCoord::new(-1 + 8 + 2, 4 + 20, 20), color: TetrisColor::Red },
+            Block { c: GridCoord::new(-1 + 8 + 2, 3 + 20, 20), color: TetrisColor::Red },
+            Block { c: GridCoord::new(-1 + 8 + 2, 2 + 20, 20), color: TetrisColor::Red },
+            Block { c: GridCoord::new(-1 + 8 + 2, 1 + 20, 20), color: TetrisColor::Red },
+            // E
+            Block { c: GridCoord::new(-0 + 4 + 2, 5 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-1 + 4 + 2, 5 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-2 + 4 + 2, 5 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-0 + 4 + 2, 4 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-0 + 4 + 2, 3 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-1 + 4 + 2, 3 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-2 + 4 + 2, 3 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-0 + 4 + 2, 2 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-0 + 4 + 2, 1 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-1 + 4 + 2, 1 + 20, 20), color: TetrisColor::Blue },
+            Block { c: GridCoord::new(-2 + 4 + 2, 1 + 20, 20), color: TetrisColor::Blue },
+            // T
+            Block { c: GridCoord::new(-0 + 0 + 2, 5 + 20, 20), color: TetrisColor::Yellow },
+            Block { c: GridCoord::new(-1 + 0 + 2, 5 + 20, 20), color: TetrisColor::Yellow },
+            Block { c: GridCoord::new(-2 + 0 + 2, 5 + 20, 20), color: TetrisColor::Yellow },
+            Block { c: GridCoord::new(-1 + 0 + 2, 4 + 20, 20), color: TetrisColor::Yellow },
+            Block { c: GridCoord::new(-1 + 0 + 2, 3 + 20, 20), color: TetrisColor::Yellow },
+            Block { c: GridCoord::new(-1 + 0 + 2, 2 + 20, 20), color: TetrisColor::Yellow },
+            Block { c: GridCoord::new(-1 + 0 + 2, 1 + 20, 20), color: TetrisColor::Yellow },
+            // R
+            Block { c: GridCoord::new(-1 - 4 + 2, 5 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-2 - 4 + 2, 5 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-0 - 4 + 2, 4 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-3 - 4 + 2, 4 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-0 - 4 + 2, 3 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-1 - 4 + 2, 3 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-2 - 4 + 2, 3 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-0 - 4 + 2, 2 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-2 - 4 + 2, 2 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-0 - 4 + 2, 1 + 20, 20), color: TetrisColor::Green },
+            Block { c: GridCoord::new(-3 - 4 + 2, 1 + 20, 20), color: TetrisColor::Green },
+            // I
+            Block { c: GridCoord::new(-0 - 9 + 2, 5 + 20, 20), color: TetrisColor::Cyan },
+            Block { c: GridCoord::new(-0 - 9 + 2, 4 + 20, 20), color: TetrisColor::Cyan },
+            Block { c: GridCoord::new(-0 - 9 + 2, 3 + 20, 20), color: TetrisColor::Cyan },
+            Block { c: GridCoord::new(-0 - 9 + 2, 2 + 20, 20), color: TetrisColor::Cyan },
+            Block { c: GridCoord::new(-0 - 9 + 2, 1 + 20, 20), color: TetrisColor::Cyan },
+            // S
+            Block { c: GridCoord::new(-1 - 11 + 2, 5 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-2 - 11 + 2, 5 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-3 - 11 + 2, 5 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-0 - 11 + 2, 4 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-1 - 11 + 2, 3 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-2 - 11 + 2, 3 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-3 - 11 + 2, 2 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-0 - 11 + 2, 1 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-1 - 11 + 2, 1 + 20, 20), color: TetrisColor::Magenta },
+            Block { c: GridCoord::new(-2 - 11 + 2, 1 + 20, 20), color: TetrisColor::Magenta },
+        ];
         for t in grid.tetris.iter() {
             for b in t.blocks.iter() {
                 blocks.push(Block {
@@ -43,7 +101,7 @@ impl Blocks {
                 real3d::render::InstanceRaw {
                     model: (Mat4::from_translation(b.c.to_vec().cast::<f32>().unwrap())
                         * Mat4::from_nonuniform_scale(0.5, 0.5, 0.5))
-                    .into(),
+                        .into(),
                 },
             )
         }
@@ -72,7 +130,7 @@ impl Base {
                     Mat4::from_translation(self.origin)
                         * Mat4::from_nonuniform_scale(1.0, 1.0, 1.0),
                 )
-                .into()),
+                    .into()),
             },
         );
     }

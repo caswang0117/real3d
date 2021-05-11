@@ -1,5 +1,5 @@
 [package]
-name = "real3d"
+name = "tetris3d"
 version = "0.1.0"
 authors = ["Jerie Wang and Cassie Wang"]
 edition = "2018"
