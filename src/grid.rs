@@ -94,23 +94,23 @@ impl Tetris {
                     // 4x1x1 line
                     blocks: vec![
                         Block {
-                            c: GridCoord::new(5, 13, 5),
+                            c: GridCoord::new(4, 12, 4),
                             color: Green,
                         },
                         Block {
-                            c: GridCoord::new(5, 13, 5),
+                            c: GridCoord::new(4, 13, 4),
                             color: Green,
                         },
                         Block {
-                            c: GridCoord::new(5, 14, 5),
+                            c: GridCoord::new(4, 14, 4),
                             color: Green,
                         },
                         Block {
-                            c: GridCoord::new(5, 15, 5),
+                            c: GridCoord::new(4, 15, 4),
                             color: Green,
                         },
                     ],
-                    bounds: TetrisBounds::new(5, 13, 5),
+                    bounds: TetrisBounds::new(4, 12, 4),
                     falling: true,
                 }
             }
@@ -242,6 +242,7 @@ pub struct Grid {
     pub tetris: Vec<Tetris>,
     pub current: usize,
     pub origin: cgmath::Vector3<i32>,
+    pub end: bool,
     grid: [GridBlock; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
 }
 
@@ -251,9 +252,17 @@ impl Grid {
             tetris: vec![Tetris::gen_random_tetris()],
             current: 0,
             origin,
+            end: false,
             grid: [GridBlock::Vacant; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
         }
     }
+
+    // pub fn index_occupied_by(&self, i:usize) -> Option<usize>{
+    //     match self.grid[i]  {
+    //         GridBlock::Vacant => None,
+    //         GridBlock::Occupied(t) =>  Some(GridBlock::Occupied.0)
+    //     }
+    // }
 
     pub fn xyz_to_index(x: i32, y: i32, z: i32) -> usize {
         debug_assert!(0 <= x && x < GRID_X_MAX);
@@ -279,10 +288,57 @@ impl Grid {
         (x, y, z)
     }
 
-    pub fn get_plane(&self, y: i32) -> &[GridBlock] {
+    pub fn get_plane(&mut self, y: i32) -> &mut [GridBlock] {
         debug_assert!(0 <= y && y < GRID_Y_MAX);
-        &self.grid
+        &mut self.grid
             [(y * GRID_Z_MAX * GRID_X_MAX) as usize..((y + 1) * GRID_Z_MAX * GRID_X_MAX) as usize]
+    }
+
+    // clear blocks on plane and lower blocks above
+    // return new set of blocks for tetris piece
+    pub fn split_piece(&mut self, i: usize, y: i32) -> Vec<Block> {
+        let mut new_blocks = vec![];
+        let tetris_vec = &mut self.tetris;
+
+        for b in tetris_vec[i].blocks.iter_mut() {
+            // if above cleared plane, lower by 1
+            if b.c.y > y {
+                self.grid[Self::coord_to_index(b.c)] = GridBlock::Vacant;
+                b.c.y -= 1;
+                self.grid[Self::coord_to_index(b.c)] = GridBlock::Occupied(i);
+                new_blocks.push(b.clone());
+            } else if b.c.y < y {
+                self.grid[Self::coord_to_index(b.c)] = GridBlock::Vacant;
+                new_blocks.push(b.clone());
+                self.grid[Self::coord_to_index(b.c)] = GridBlock::Occupied(i);
+            }
+        }
+        new_blocks
+    }
+
+    pub fn clear_plane(&mut self, y: i32) {
+        debug_assert!(0 <= y && y < GRID_Y_MAX);
+        println!("clear function");
+        let start_i = y * GRID_Z_MAX * GRID_X_MAX;
+        let mut modified = vec![];
+        let mut grid = self.grid;
+
+        // go through every gridblock in this plane
+        for (i, g) in grid
+            [(y * GRID_Z_MAX * GRID_X_MAX) as usize..((y + 1) * GRID_Z_MAX * GRID_X_MAX) as usize]
+            .iter_mut()
+            .enumerate()
+        {
+            let coord = Grid::index_to_coord(start_i as usize + i);
+            if let GridBlock::Occupied(tetris_i) = g {
+                // don't split piece if already split
+                if !modified.contains(tetris_i) {
+                    let new_blocks = self.split_piece(*tetris_i, y);
+                    self.tetris[*tetris_i].blocks = new_blocks;
+                    modified.push(*tetris_i);
+                }
+            }
+        }
     }
     // takes a grid coordinate, returns index in grid struct
     pub fn coord_to_index(c: GridCoord) -> usize {
@@ -300,25 +356,44 @@ impl Grid {
         let tetris = Tetris::gen_random_tetris();
         println!("add_tetris function");
         let i = self.tetris.len();
-        self.current = i;
         for b in &tetris.blocks {
+            println!(" coord: {:?}", b.c);
+            println!("gridblock: {:?}", self.grid[Self::coord_to_index(b.c)]);
+            if (!(self.grid[Self::coord_to_index(b.c)].is_vacant())
+                && self.grid[Self::coord_to_index(b.c)] != GridBlock::Occupied(i))
+            {
+                self.end_game();
+                return;
+            }
             // debug_assert_eq!(self.grid[Self::coord_to_index(b.c)], GridBlock::Vacant);
             // println!("coord: {:?}", b.c);
             // println!("gridblock: {:?}", self.grid[Self::coord_to_index(b.c)]);
-            self.grid[Self::coord_to_index(b.c)] = GridBlock::Occupied(i)
+            self.grid[Self::coord_to_index(b.c)] = GridBlock::Occupied(i);
         }
         self.tetris.push(tetris);
+        self.current = i;
     }
 
-    pub fn tetris_at_xyz(&self, x: i32, y: i32, z: i32) -> Option<&Tetris> {
+    // change all tetris colors and stop spawning new ones when game over
+    pub fn end_game(&mut self) {
+        println!("end game");
+        for t in self.tetris.iter_mut() {
+            for b in t.blocks.iter_mut() {
+                b.color = TetrisColor::Mix;
+            }
+        }
+        self.end = true;
+    }
+
+    pub fn tetris_at_xyz(&mut self, x: i32, y: i32, z: i32) -> Option<&mut Tetris> {
         let block = self.grid[Self::xyz_to_index(x, y, z)];
         match block {
-            GridBlock::Occupied(i) => Some(&self.tetris[i]),
+            GridBlock::Occupied(i) => Some(&mut self.tetris[i]),
             GridBlock::Vacant => None,
         }
     }
 
-    pub fn tetris_at_coord(&self, c: GridCoord) -> Option<&Tetris> {
+    pub fn tetris_at_coord(&mut self, c: GridCoord) -> Option<&mut Tetris> {
         let (x, y, z) = (c.x, c.y, c.z);
         self.tetris_at_xyz(x, y, z)
     }
@@ -326,7 +401,7 @@ impl Grid {
     // drop tetris by one grid spot
     pub fn lower_tetris(&mut self, i: usize) {
         let t = &mut self.tetris[i];
-        println!("lower_tetris function");
+        // println!("lower_tetris function");
 
         // check if all spaces below are vacant or self and not floor
         for block in t.blocks.iter_mut() {
@@ -342,7 +417,21 @@ impl Grid {
                 || (!(self.grid[Self::coord_to_index(check)].is_vacant())
                     && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
             {
-                // println!("enter if");
+                // println!("stop falling at {:?}", block.c);
+                // println!("check y: {:?}", check.y);
+                // println!(
+                //     "check not vacant: {:?}",
+                //     check.y == -1
+                //         || (!(self.grid[Self::coord_to_index(check)].is_vacant())
+                //             && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                // );
+                if check.y != -1 {
+                    println!(
+                        "occupied by: {:?}, current: {:?}",
+                        self.grid[Self::coord_to_index(check)],
+                        i
+                    );
+                }
                 t.falling = false;
                 return;
             };
@@ -353,8 +442,6 @@ impl Grid {
             self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
             block.c.y -= 1;
             self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
-            // let mut check = block.c;
-            // check.y += 1;
         }
     }
 
@@ -427,6 +514,7 @@ impl Grid {
 
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
+                        self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.x -= 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
                         // find new left bound
@@ -454,6 +542,7 @@ impl Grid {
 
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
+                        self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.x += 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
                         // find new right bound
@@ -481,6 +570,7 @@ impl Grid {
 
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
+                        self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.z += 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
                         // find new top bound
@@ -508,6 +598,7 @@ impl Grid {
 
                     // move each block in tetris left 1
                     for block in t.blocks.iter_mut() {
+                        self.grid[Self::coord_to_index(block.c)] = GridBlock::Vacant;
                         block.c.z -= 1;
                         self.grid[Self::coord_to_index(block.c)] = GridBlock::Occupied(i);
                         // find new bottom bound

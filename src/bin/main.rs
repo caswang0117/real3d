@@ -169,8 +169,15 @@ impl real3d::Game for Game {
         self.camera_controller.update(engine);
         let curr = self.grid.current;
 
+        // println!("current:{}", curr);
+        // println!("falling?: {}", self.grid.tetris[curr].falling);
+        if !self.grid.tetris[curr].falling && self.grid.tetris.len() == 6 {
+            self.grid.clear_plane(1);
+            self.blocks = Blocks::new(&self.grid);
+        }
+
         // when current piece lands, check to clear plane and spawn new piece
-        if !self.grid.tetris[curr].falling {
+        if !self.grid.tetris[curr].falling && !self.grid.end {
             // TODO check if plane needs to be cleared
             self.grid.add_tetris();
             self.blocks = Blocks::new(&self.grid);
