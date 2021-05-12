@@ -12,6 +12,7 @@ pub struct Server {
     sock: Option<TcpStream>,
     waiting: bool,
     pub connected: bool,
+    pub has_other: bool,
 }
 
 #[allow(dead_code)]
@@ -21,6 +22,7 @@ impl Server {
             id: -1,
             connected: false,
             waiting: false,
+            has_other: false,
             sock: None,
         }
     }
@@ -58,7 +60,7 @@ impl Server {
         sock.shutdown(Shutdown::Both).unwrap();
     }
 
-    fn update(&self, grid: &SerializableGrid) -> Result<Vec<SerializableGrid>, Box<dyn std::error::Error>> {
+    fn update(&mut self, grid: &SerializableGrid) -> Result<Vec<SerializableGrid>, Box<dyn std::error::Error>> {
         if !self.connected || self.waiting {
             return Ok(Vec::<SerializableGrid>::new()); // empty vec
         }
@@ -76,24 +78,31 @@ impl Server {
         if let Some(term) = s.find("\n") {
             let v: Vec<SerializableGrid> = serde_json::from_str(&s[..term])?;
             // println!("Instance {} Recved from server: {}", self.id, s);
+            if v.len()==0{
+                self.has_other=false;
+            } else {
+                self.has_other=true;
+            }
             Ok(v)
         } else {
+            // println!("unexpected error. something went wrong");
             Ok(Vec::<SerializableGrid>::new())
+
             // this is not ok but i can't get rust to throw something sensible
         }
     }
 
-    pub fn update_grid(&mut self, grid:&Grid) -> Vec<SerializableGrid> {
-        let sg=SerializableGrid::from_grid(grid);
+    pub fn update_grid(&mut self, grid: &Grid) -> Vec<SerializableGrid> {
+        let sg = SerializableGrid::from_grid(grid);
         let response = self.update(&sg);
         match response {
             Ok(v) => {
                 self.waiting = false;
-                return v
+                return v;
             }
             _ => {
                 self.waiting = true;
-                return vec![]
+                return vec![];
             }
         }
     }

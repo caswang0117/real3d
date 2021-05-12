@@ -57,7 +57,11 @@ impl Tetris {
                 Tetris {
                     blocks: vec![
                         Block {
-                            c: GridCoord::new(5, 15, 5),
+                            c: GridCoord::new(5, 14, 4),
+                            color: Red,
+                        },
+                        Block {
+                            c: GridCoord::new(4, 14, 4),
                             color: Red,
                         },
                         Block {
@@ -77,11 +81,7 @@ impl Tetris {
                             color: Red,
                         },
                         Block {
-                            c: GridCoord::new(4, 14, 4),
-                            color: Red,
-                        },
-                        Block {
-                            c: GridCoord::new(5, 14, 4),
+                            c: GridCoord::new(5, 15, 5),
                             color: Red,
                         },
                         Block {
@@ -428,8 +428,8 @@ impl Grid {
             //             && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
             // );
             if check.y == -1
-                || (!(self.grid[Self::coord_to_index(check)].is_vacant())
-                    && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                || ((!(self.grid[Self::coord_to_index(check)].is_vacant())
+                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i)))
             {
                 // println!("stop falling at {:?}", block.c);
                 // println!("check y: {:?}", check.y);
@@ -473,7 +473,7 @@ impl Grid {
                 // check that space below is vacant and not self and not below grid
                 if check.y == -1
                     || (!(self.grid[Self::coord_to_index(check)].is_vacant())
-                        && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                    && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                 {
                     check_t.falling = false;
                 } else {
@@ -515,7 +515,7 @@ impl Grid {
 
                         if check.x == -1
                             || (!(self.grid[Self::coord_to_index(check)].is_vacant())
-                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                            && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                         {
                             return;
                         };
@@ -536,7 +536,7 @@ impl Grid {
                         let check = GridCoord::new(block.c.x + 1, block.c.y, block.c.z);
                         if check.x == 8
                             || (!(self.grid[Self::coord_to_index(check)].is_vacant())
-                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                            && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                         {
                             return;
                         };
@@ -557,7 +557,7 @@ impl Grid {
                         let check = GridCoord::new(block.c.x, block.c.y, block.c.z + 1);
                         if check.z == 8
                             || (!(self.grid[Self::coord_to_index(check)].is_vacant())
-                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                            && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                         {
                             return;
                         };
@@ -577,7 +577,7 @@ impl Grid {
                         let check = GridCoord::new(block.c.x, block.c.y, block.c.z - 1);
                         if check.z == -1
                             || (!(self.grid[Self::coord_to_index(check)].is_vacant())
-                                && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
+                            && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                         {
                             return;
                         };

@@ -175,11 +175,11 @@ struct GameData {
 
 impl Game {
     fn recalc_blocks(&mut self) {
-        if self.multiplayer_init {
-            self.blocks = Blocks::new(&self.grid, -5);
-        } else {
+        // if self.multiplayer_init {
+        //     self.blocks = Blocks::new(&self.grid, -5);
+        // } else {
             self.blocks = Blocks::new(&self.grid, self.multiplayer_offset);
-        }
+        // }
     }
 }
 
@@ -323,7 +323,11 @@ impl real3d::Game for Game {
             self.grid.lower_tetris(curr);
             self.recalc_blocks();
         } else if engine.events.key_pressed(KeyCode::Return) {
-            save(&self.grid, "tetris_save.json");
+            if self.grid.end {
+                save(&Grid::new(self.grid.origin), "tetris_save.json");
+            } else {
+                save(&self.grid, "tetris_save.json");
+            }
             println!("Game saved");
         } else if engine.events.key_pressed(KeyCode::N) {
             println!("Game restarted");
@@ -336,11 +340,23 @@ impl real3d::Game for Game {
             if !self.multiplayer_init && engine.camera_mut().eye.x >= -5.0 {
                 engine.camera_mut().eye.x -= 1.0;
                 engine.camera_mut().target.x -= 1.0;
-                // engine.camera_mut().eye.z -= 0.1;
                 self.multiplayer_offset -= 1;
                 self.recalc_blocks();
             } else {
                 self.multiplayer_init = true
+            }
+        }
+        if self.multiplayer_init && !self.server.has_other {
+            let mut c = engine.camera_mut();
+            if c.eye.x < 0.0 {
+                engine.camera_mut().eye.x += 1.0;
+                engine.camera_mut().target.x += 1.0;
+                self.multiplayer_offset += 1;
+                self.recalc_blocks();
+            } else {
+                self.multiplayer_init = false;
+                self.other_bases=vec![];
+                self.other_blocks=None;
             }
         }
         let light_pos = self.light.position();
