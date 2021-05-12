@@ -2,12 +2,13 @@ use kira::{manager::AudioManager, manager::AudioManagerSettings, sound::SoundSet
 use rand;
 use real3d::{
     audio::*, camera_control::*, events::*, geom::*, grid::*, lights::Light,
-    render::InstanceGroups, run, Engine, DT,
+    render::InstanceGroups, run, Engine, serialization::*, network::Server,
 };
 use std::ops::Add;
 use winit;
-// mod camera_control;
-// use camera_control::CameraController;
+use serde_json;
+use real3d::save::{save, load};
+
 
 #[derive(Clone, Debug)]
 pub struct Blocks {
@@ -86,6 +87,21 @@ impl Blocks {
         Self { vec: blocks }
     }
 
+    fn from_serialized(grid: &SerializableGrid, origin: cgmath::Vector3<i32>) -> Self {
+        let mut v = vec![];
+        for t in grid.tetris.iter() {
+            for b in t.blocks.iter() {
+                let mut b = b.to_block();
+                b.c += origin;
+                v.push(b)
+            }
+        }
+
+        Self {
+            vec: v
+        }
+    }
+
     fn render(&self, rules: &GameData, igs: &mut InstanceGroups) {
         for b in self.vec.iter() {
             igs.render(
@@ -124,7 +140,7 @@ pub struct Base {
 impl Base {
     fn render(&self, rules: &GameData, igs: &mut InstanceGroups) {
         igs.render(
-            rules.wall_model,
+            rules.base_model,
             real3d::render::InstanceRaw {
                 model: (Mat4::from(
                     Mat4::from_translation(self.origin)
@@ -138,15 +154,17 @@ impl Base {
 
 struct Game {
     blocks: Blocks,
+    other_blocks: Option<Blocks>,
     grid: Grid,
-    wall: Base,
+    base: Base,
     light: Light,
     audio: Audio,
     camera_controller: CameraController,
+    server: Server,
 }
 
 struct GameData {
-    wall_model: real3d::assets::ModelRef,
+    base_model: real3d::assets::ModelRef,
     tetris_models: Vec<real3d::assets::ModelRef>,
 }
 
@@ -157,9 +175,8 @@ impl real3d::Game for Game {
         let base = Base {
             origin: Vec3::new(0.0, 0.0, 0.0),
         };
-        let mut rng = rand::thread_rng();
 
-        let wall_model = engine.load_model("floor.obj");
+        let base_model = engine.load_model("floor.obj");
 
         let tetris_models = vec![
             // RGB CMY and kinda K
@@ -173,32 +190,14 @@ impl real3d::Game for Game {
         ];
 
         engine.set_ambient(1.0);
-        let mut grid = Grid::new(cgmath::Vector3::<i32>::new(-4, 1, -3));
-        // for _ in 0..10 {
-        //     grid.lower_tetris(0);
-        // }
-        // grid.tetris[0].blocks.push(Block { c: GridCoord::new(0, 0, 0), color: TetrisColor::Mix });
-        // println!("{:#?}", grid.tetris[0]);
+        // let mut grid = Grid::new(cgmath::Vector3::<i32>::new(-4, 1, -3));
+        let mut grid = load(
+            "tetris_save.json",
+            cgmath::Vector3::<i32>::new(-4, 1, -3),
+        );
 
         let blocks = Blocks::new(&grid);
 
-        //  let boxes = Boxes {
-        //     tetris_block: (0..NUM_BOXES)
-        //         .map(|_x| {
-        //             let x = rng.gen_range(-20.0..20.0);
-        //             let y = rng.gen_range(1.0..20.0);
-        //             let z = rng.gen_range(-20.0..20.0);
-        //             AABB {
-        //                 c: Pos3::new(x, y, z),
-        //                 half_sizes: Vec3::new(
-        //                     rng.gen_range(0.25..1.0),
-        //                     rng.gen_range(0.25..1.0),
-        //                     rng.gen_range(0.25..1.0),
-        //                 ),
-        //             }
-        //         })
-        //         .collect::<Vec<_>>(),
-        // };
         let light = Light::point(Pos3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
 
         let mut audio_manager = AudioManager::new(AudioManagerSettings::default()).unwrap();
@@ -216,19 +215,22 @@ impl real3d::Game for Game {
             .unwrap();
         let sound_handles = vec![gameplay, clear];
         let audio = Audio::new(audio_manager, sound_handles);
-
+        let mut server = Server::new();
+        server.connect("45.10.152.68:16512");
         let camera_controller = CameraController::new(1.0);
         (
             Self {
                 camera_controller,
                 blocks,
                 grid,
-                wall: base,
+                base,
                 audio,
                 light,
+                server,
+                other_blocks: None,
             },
             GameData {
-                wall_model,
+                base_model,
                 tetris_models,
             },
         )
@@ -239,9 +241,11 @@ impl real3d::Game for Game {
         assets: &real3d::assets::Assets,
         igs: &mut InstanceGroups,
     ) {
-        self.wall.render(rules, igs);
+        self.base.render(rules, igs);
         self.blocks.render(rules, igs);
-        // TODO: draw a light model with a shader that just renders it in its solid color?
+        if let Some(o) = &self.other_blocks {
+            o.render(rules, igs)
+        }
     }
     fn update(&mut self, _rules: &Self::StaticData, engine: &mut Engine) {
         self.camera_controller.update(engine);
@@ -250,16 +254,11 @@ impl real3d::Game for Game {
             .play(SoundID(0), true, Some(0.0), AlreadyPlayingAction::Nothing);
         let curr = self.grid.current;
 
-        // if !self.grid.tetris[curr].falling && (self.grid.tetris.len()% 10 == 0 {
-        //     self.grid.clear_plane(1);
-        //     self.blocks = Blocks::new(&self.grid);
-        // }
-
         // when current piece lands, check to clear plane and spawn new piece
         if !self.grid.tetris[curr].falling && !self.grid.end {
             // check if plane needs to be cleared
             let planes = self.grid.check_planes();
-            println!("planes: {:?}", planes);
+            // println!("planes: {:?}", planes);
             if !planes.is_empty() {
                 for p in planes {
                     self.grid.clear_plane(p);
@@ -298,8 +297,17 @@ impl real3d::Game for Game {
         } else if engine.events.key_held(KeyCode::Down) {
             self.grid.lower_tetris(curr);
             self.blocks = Blocks::new(&self.grid);
+        } else if engine.events.key_pressed(KeyCode::Return) {
+            save(&self.grid, "tetris_save.json");
+            println!("Game saved");
+        } else if engine.events.key_pressed(KeyCode::N) {
+            println!("Game restarted");
+            self.grid = Grid::new(cgmath::Vector3::<i32>::new(-4, 1, -3));
         }
-
+        let other = self.server.update_grid(&self.grid);
+        if other.len() > 0 {
+            self.other_blocks = Some(Blocks::from_serialized(&other[0], cgmath::Vector3::<i32>::new(-15, 1, -3)));
+        }
         let light_pos = self.light.position();
         self.light = Light::point(light_pos, self.light.color());
         engine.set_lights(vec![self.light]);

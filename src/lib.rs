@@ -20,7 +20,10 @@ use assets::Assets;
 pub mod camera_control;
 pub mod grid;
 pub mod lights;
+pub mod serialization;
+pub mod save;
 pub mod network;
+
 pub const DT: f32 = 1.0 / 60.0;
 
 pub trait Game: Sized {

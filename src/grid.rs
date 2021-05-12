@@ -50,7 +50,7 @@ impl Tetris {
         use TetrisColor::*;
         let mut rng = rand::thread_rng();
         let shape: usize = rng.gen_range(0..6);
-        println!("Shape {}", shape);
+        // println!("Shape {}", shape);
         match shape {
             0 => {
                 // 2x2x2 cube
@@ -240,7 +240,7 @@ pub struct Grid {
     pub current: usize,
     pub origin: cgmath::Vector3<i32>,
     pub end: bool,
-    grid: [GridBlock; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
+    pub grid: [GridBlock; (GRID_X_MAX * GRID_Y_MAX * GRID_Z_MAX) as usize],
 }
 
 impl Grid {
@@ -332,7 +332,7 @@ impl Grid {
 
     pub fn clear_plane(&mut self, y: i32) {
         debug_assert!(0 <= y && y < GRID_Y_MAX);
-        println!("clear function");
+        // println!("clear function");
         let start_i = y * GRID_Z_MAX * GRID_X_MAX;
         let mut modified = vec![];
         let mut grid = self.grid;
@@ -368,11 +368,11 @@ impl Grid {
     // spawn new tetris piece
     pub fn add_tetris(&mut self) {
         let tetris = Tetris::gen_random_tetris();
-        println!("add_tetris function");
+        // println!("add_tetris function");
         let i = self.tetris.len();
         for b in &tetris.blocks {
-            println!(" coord: {:?}", b.c);
-            println!("gridblock: {:?}", self.grid[Self::coord_to_index(b.c)]);
+            // println!(" coord: {:?}", b.c);
+            // println!("gridblock: {:?}", self.grid[Self::coord_to_index(b.c)]);
             if (!(self.grid[Self::coord_to_index(b.c)].is_vacant())
                 && self.grid[Self::coord_to_index(b.c)] != GridBlock::Occupied(i))
             {
@@ -390,7 +390,7 @@ impl Grid {
 
     // change all tetris colors and stop spawning new ones when game over
     pub fn end_game(&mut self) {
-        println!("end game");
+        println!("You died. GG.");
         for t in self.tetris.iter_mut() {
             for b in t.blocks.iter_mut() {
                 b.color = TetrisColor::Mix;
@@ -439,13 +439,13 @@ impl Grid {
                 //         || (!(self.grid[Self::coord_to_index(check)].is_vacant())
                 //             && self.grid[Self::coord_to_index(check)] != GridBlock::Occupied(i))
                 // );
-                if check.y != -1 {
-                    println!(
-                        "occupied by: {:?}, current: {:?}",
-                        self.grid[Self::coord_to_index(check)],
-                        i
-                    );
-                }
+                // if check.y != -1 {
+                //     println!(
+                //         "occupied by: {:?}, current: {:?}",
+                //         self.grid[Self::coord_to_index(check)],
+                //         i
+                //     );
+                // }
                 t.falling = false;
                 return;
             };
@@ -501,14 +501,14 @@ impl Grid {
     // 0 left, 1 right, 2 up, 3 down
     pub fn move_xz(&mut self, i: usize, d: usize) {
         let t = &mut self.tetris[i];
-        println!("move_xz function");
+        // println!("move_xz function");
         // don't move if will be out of grid
         if t.falling
         {
             match d {
                 // Left
                 0 => {
-                    println!("left");
+                    // println!("left");
                     // check move won't crash into any occupied spaces
                     for block in &t.blocks {
                         let check = GridCoord::new(block.c.x - 1, block.c.y, block.c.z);
